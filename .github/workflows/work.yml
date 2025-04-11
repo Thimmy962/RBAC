@@ -25,6 +25,7 @@ jobs:
     - name: Run Tests
       run: |
         python manage.py test
+
   merge:
     needs: test
     runs-on: ubuntu-latest
@@ -36,17 +37,21 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch all branches
-        run: |
-          git fetch origin
+        run: git fetch origin
+
+      - name: Checkout master from origin
+        run: git checkout origin/master
+
       - name: Checkout work branch
-        run: |
-          git checkout work
+        run: git checkout work
+
       - name: Merge work into master
         run: |
           git checkout master
           git config --global user.name 'Dada Oluwatimileyin'
           git config --global user.email 'oluwatimileyin962@gmail.com'
-          git merge -X theirs work --no-ff --no-edit --allow-unrelated-histories
-      - name: Push changes to main
+          git merge work --no-ff --no-edit
+
+      - name: Push changes to master
         run: |
           git push origin master
