@@ -4,7 +4,6 @@ on:
   push:
     branches: [work]
 
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -35,17 +34,26 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # fetch full history and all branches
+          fetch-depth: 0  # Fetch full history for all branches
 
       - name: Set up Git identity
         run: |
           git config --global user.name 'Dada Oluwatimileyin'
           git config --global user.email 'oluwatimileyin962@gmail.com'
 
+      - name: Ensure master is up-to-date
+        run: |
+          git checkout master
+          git pull origin master  # Ensure master is up-to-date with remote
+
+      - name: Fetch work branch
+        run: |
+          git fetch origin work  # Fetch the latest `work` branch from the remote
+
       - name: Merge work into master
         run: |
           git checkout master
-          git merge -X theirs origin/work --no-ff --no-edit --allow-unrelated-histories
+          git merge --strategy-option=theirs origin/work --no-ff --no-edit --allow-unrelated-histories
 
       - name: Push changes to master
         run: |
