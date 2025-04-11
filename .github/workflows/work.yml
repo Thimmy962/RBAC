@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     if: success()
     steps:
-      - name: Checkout master branch
+      - name: Checkout main branch
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -39,19 +39,19 @@ jobs:
       - name: Fetch all branches
         run: git fetch origin
 
-      - name: Checkout master from origin
-        run: git checkout origin/master
+      - name: Checkout main from origin
+        run: git checkout origin/main
 
       - name: Checkout work branch
         run: git checkout work
 
-      - name: Merge work into master
+      - name: Merge work into main
         run: |
-          git checkout master
+          git checkout main
           git config --global user.name 'Dada Oluwatimileyin'
           git config --global user.email 'oluwatimileyin962@gmail.com'
           git merge work --no-ff --no-edit
 
-      - name: Push changes to master
+      - name: Push changes to main
         run: |
-          git push origin master
+          git push origin main
