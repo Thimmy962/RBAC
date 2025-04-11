@@ -32,26 +32,21 @@ jobs:
     runs-on: ubuntu-latest
     if: success()
     steps:
-      - name: Checkout master branch
-        uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
         with:
-          ref: master
+          fetch-depth: 0  # fetch full history and all branches
 
-      - name: Fetch all branches
+      - name: Set up Git identity
         run: |
-          git fetch origin
-
-      - name: Checkout work branch
-        run: |
-          git checkout work
+          git config --global user.name 'Dada Oluwatimileyin'
+          git config --global user.email 'oluwatimileyin962@gmail.com'
 
       - name: Merge work into master
         run: |
           git checkout master
-          git config --global user.name 'Dada Oluwatimileyin'
-          git config --global user.email 'oluwatimileyin962@gmail.com'
-          git merge -X theirs work --no-ff --no-edit --allow-unrelated-histories
+          git merge -X theirs origin/work --no-ff --no-edit --allow-unrelated-histories
 
-      - name: Push changes to main
+      - name: Push changes to master
         run: |
           git push origin master
