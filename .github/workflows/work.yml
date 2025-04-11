@@ -25,36 +25,28 @@ jobs:
     - name: Run Tests
       run: |
         python manage.py test
-
   merge:
     needs: test
     runs-on: ubuntu-latest
     if: success()
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - name: Checkout master branch
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch full history for all branches
+          fetch-depth: 0
 
-      - name: Set up Git identity
+      - name: Fetch all branches
         run: |
-          git config --global user.name 'Dada Oluwatimileyin'
-          git config --global user.email 'oluwatimileyin962@gmail.com'
-
-      - name: Ensure master is up-to-date
+          git fetch origin
+      - name: Checkout work branch
         run: |
-          git checkout master
-          git pull origin master  # Ensure master is up-to-date with remote
-
-      - name: Fetch work branch
-        run: |
-          git fetch origin work  # Fetch the latest `work` branch from the remote
-
+          git checkout work
       - name: Merge work into master
         run: |
           git checkout master
-          git merge --strategy-option=theirs origin/work --no-ff --no-edit --allow-unrelated-histories
-
-      - name: Push changes to master
+          git config --global user.name 'Dada Oluwatimileyin'
+          git config --global user.email 'oluwatimileyin962@gmail.com'
+          git merge -X theirs work --no-ff --no-edit --allow-unrelated-histories
+      - name: Push changes to main
         run: |
           git push origin master
