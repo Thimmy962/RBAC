@@ -51,7 +51,11 @@ jobs:
           git config --global user.name 'Dada Oluwatimileyin'
           git config --global user.email 'oluwatimileyin962@gmail.com'
           git merge work --no-ff --no-edit
-
+      
+      - name: Set new remote with token
+        run: |
+            git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/Thimmy962/RBAC.git
+        
       - name: Push changes to main
         run: |
-          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/Thimmy962/RBAC.git main # i used a token here to gain access
+          git push origin main
