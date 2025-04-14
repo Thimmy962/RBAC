@@ -40,7 +40,7 @@ jobs:
         run: git fetch origin main
 
       - name: Checkout work branch
-        run: git checkout origin work
+        run: git checkout -b work origin/work
 
       - name: Merge work into main
         run: |
