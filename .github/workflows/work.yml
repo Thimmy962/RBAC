@@ -31,31 +31,23 @@ jobs:
     runs-on: ubuntu-latest
     if: success()
     steps:
-      - name: Checkout main branch
+      - name: Checkout master branch
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          ref: master
 
       - name: Fetch all branches
-        run: git fetch origin
-
-      - name: Checkout main from origin
-        run: git checkout origin/main
-
-      - name: Checkout work branch
-        run: git checkout work
-
-      - name: Merge work into main
         run: |
-          git checkout main
+          git fetch origin
+      - name: Checkout work branch
+        run: |
+          git checkout work
+      - name: Merge work into master
+        run: |
+          git checkout master
           git config --global user.name 'Dada Oluwatimileyin'
           git config --global user.email 'oluwatimileyin962@gmail.com'
-          git merge work --no-ff --no-edit
-      
-      - name: Set new remote with token
-        run: |
-            git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/Thimmy962/RBAC.git
-        
+          git merge -X theirs work --no-ff --no-edit --allow-unrelated-histories
       - name: Push changes to main
         run: |
-          git push origin main
+          git push origin master
