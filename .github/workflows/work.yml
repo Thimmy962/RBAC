@@ -49,5 +49,4 @@ jobs:
           git config --global user.email 'oluwatimileyin962@gmail.com'
           git merge -X theirs work --no-ff --no-edit --allow-unrelated-histories
       - name: Push changes to main
-        run: |
-          git push origin main
+        run: git push main
