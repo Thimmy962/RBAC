@@ -34,13 +34,13 @@ jobs:
       - name: Checkout master branch
         uses: actions/checkout@v3
         with:
-          ref: main
+          fetch-depth: 0
 
       - name: Fetch all branches
-        run: git fetch origin/main
+        run: git fetch origin main
 
       - name: Checkout work branch
-        run: git checkout work
+        run: git checkout origin work
 
       - name: Merge work into main
         run: |
