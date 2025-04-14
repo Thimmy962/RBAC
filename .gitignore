@@ -1,0 +1,11 @@
+__pycache__
+migrations/
+*.sqlite3
+dump.rdb
+logs.*
+pyclients/
+static/
+staticfiles/
+dump.rdb
+logs.txt
+.env

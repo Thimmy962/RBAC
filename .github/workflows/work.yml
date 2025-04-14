@@ -1,0 +1,52 @@
+name: Django CI/CD Pipeline
+
+on:
+  push:
+    branches: [work]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+        DEBUG: ${{ secrets.DEBUG }}
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        ALLOWED_HOSTS: '*'
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Run Tests
+      run: |
+        python manage.py test
+
+  merge:
+    needs: test
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Checkout master branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all branches
+        run: git fetch origin main
+
+      - name: Checkout work branch
+        run: git checkout work
+
+      - name: Merge work into main
+        run: |
+          git checkout main
+          git config --global user.name 'Dada Oluwatimileyin'
+          git config --global user.email 'oluwatimileyin962@gmail.com'
+          git merge -X theirs work --no-ff --no-edit --allow-unrelated-histories
+      - name: Push changes to main
+        run: git push origin main
