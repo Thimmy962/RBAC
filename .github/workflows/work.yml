@@ -34,20 +34,20 @@ jobs:
       - name: Checkout master branch
         uses: actions/checkout@v3
         with:
-          ref: master
+          ref: main
 
       - name: Fetch all branches
         run: |
-          git fetch origin
+          git fetch origin main
       - name: Checkout work branch
         run: |
           git checkout work
-      - name: Merge work into master
+      - name: Merge work into main
         run: |
-          git checkout master
+          git checkout main
           git config --global user.name 'Dada Oluwatimileyin'
           git config --global user.email 'oluwatimileyin962@gmail.com'
           git merge -X theirs work --no-ff --no-edit --allow-unrelated-histories
       - name: Push changes to main
         run: |
-          git push origin master
+          git push origin main
