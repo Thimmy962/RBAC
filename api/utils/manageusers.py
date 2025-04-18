@@ -1,4 +1,4 @@
-from rest_framework import generics, response, status, generics
+from rest_framework import generics, response, status
 from ..models import User
 from . import serializers
 from . import validate
@@ -7,6 +7,12 @@ from . import validate
 class UserListCreateView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = serializers.PostUserSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return serializers.PostUserSerializer
+        return serializers.GetUserSerializer
+
 
     def post(self, request, *args, **kwargs):
         copied_data = request.data.copy() # request.data is immutable, hence we need to copy it before cleaning it
@@ -17,4 +23,5 @@ class UserListCreateView(generics.ListCreateAPIView):
             serializer.save()
             return response.Response("Created Successfully", status=status.HTTP_201_CREATED)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 list_Create_user = UserListCreateView.as_view()

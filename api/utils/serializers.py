@@ -6,7 +6,7 @@ from ..models import User
 class PostUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password']
+        fields = ['username', 'email', 'password']
 
     # Validate email
     def validate_email(self, value):
@@ -24,5 +24,10 @@ class PostUserSerializer(serializers.ModelSerializer):
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Username already exists")
         return value
+
+class GetUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email"]
 
 

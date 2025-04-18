@@ -9,12 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 @decorators.permission_classes([])
 def index(request):
 
-    data = {
-        "name": "Thimmy",
-        "age": 21
-    }
-
-    return response.Response(data, status = status.HTTP_200_OK)
+    return response.Response("Hello", status = status.HTTP_200_OK)
 
 
 @decorators.api_view(['POST'])
