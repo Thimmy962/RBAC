@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
-    TokenRefreshView,
+    TokenRefreshView, TokenError,
     TokenViewBase, Request, Response, status
 )
 from django.contrib import admin
@@ -32,7 +32,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 urlpatterns = [
-    path('api/token/', CustomTokenObtainPairView.as_view()),
-    path('api/token/refresh/', TokenRefreshView.as_view()),
+    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include("api.urls")),
 ]
