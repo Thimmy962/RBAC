@@ -6,8 +6,8 @@ def clean_data(data):
     if data["password"] == "":
         raise serializers.ValidationError("Password is required")
     
-    data["username"] = data["username"].title()
+    data["username"] = data["username"].strip().title()
     if data["email"] is not None:
-        data["email"] = data["email"].lower()
+        data["email"] = data["email"].strip().lower()
     
     return data
