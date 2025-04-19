@@ -8,7 +8,7 @@ from django.urls import path, include
 
 def clean_data(data):
     if data["username"] is not None:
-        data["username"] = data["username"].title()
+        data["username"] = data["username"].strip().title()
     return data
 
 """
