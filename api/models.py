@@ -29,5 +29,10 @@ class User(AbstractUser):
         if not self.pk and not self.check_password(self.password):
             self.set_password(self.password)
         return super().save(*args, **kwargs)
+    
+    class Meta:
+        permissions = [
+            ("can_manage_staffs", "Can manage staffs")
+        ]
 
 

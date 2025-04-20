@@ -1,17 +1,20 @@
 from rest_framework import generics, response, status
+from ..permissions import ManageUserPermissionMixin
 from ..models import User
-from . import serializers
-from . import validate
+from . import serializers, validate
 
 
-class UserListCreateView(generics.ListCreateAPIView):
+
+
+
+class ListCreateViewUserView(ManageUserPermissionMixin, generics.ListCreateAPIView):
     queryset = User.objects.all()
-    serializer_class = serializers.PostUserSerializer
+    
 
     def get_serializer_class(self):
         if self.request.method == "POST":
-            return serializers.PostUserSerializer
-        return serializers.GetUserSerializer
+            return serializers.ListCreateUserSerializer
+        return serializers.RetrieveUpdateDestroyUserSerializer
 
 
     def post(self, request, *args, **kwargs):
@@ -23,5 +26,10 @@ class UserListCreateView(generics.ListCreateAPIView):
             serializer.save()
             return response.Response("Created Successfully", status=status.HTTP_201_CREATED)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+list_Create_user = ListCreateViewUserView.as_view()
 
-list_Create_user = UserListCreateView.as_view()
+
+class RetrieveUpdateDestroyUserView(ManageUserPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = serializers.RetrieveUpdateDestroyUserSerializer
+retrieve_update_destroy_user = RetrieveUpdateDestroyUserView.as_view()
