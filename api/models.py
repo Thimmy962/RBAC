@@ -25,9 +25,14 @@ class User(AbstractUser):
     )
 
     # This is a custom save method to set the password if it is not already set
-    def save(self, *args, **kwargs):
-        if not self.pk and not self.check_password(self.password):
-            self.set_password(self.password)
-        return super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.pk and not self.check_password(self.password):
+    #         self.set_password(self.password)
+    #     return super().save(*args, **kwargs)
+    
+    class Meta:
+        permissions = [
+            ("can_manage_staffs", "Can manage staffs")
+        ]
 
 
