@@ -30,20 +30,26 @@ class ListCreateUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email', 'password']
+        extra_kwargs = {
+            'password': {'write_only': True}  # this hides the password in API responses
+        }
 
-    # Validate email
+    # Tthis create() method to hash password
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+
     def validate_email(self, value):
-        # If email is empty, return it
         if value == "":
             return value
-        # If email already exists, raise an error
         if User.objects.filter(email=value.lower()).exists():
             raise serializers.ValidationError("Email already exists")
         return value.lower()
-    
-    # Validate username
+
     def validate_username(self, value):
-        # username should be unique
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Username already exists")
         return value
@@ -55,7 +61,7 @@ class RetrieveUpdateDestroyUserSerializer(serializers.ModelSerializer):
         fields = ["username", "email",
           "first_name", "last_name", "phone", 
           "address", "is_staff", "is_active",
-            "groups"
+            "groups", "password"
         ]
 
     def validate_email(self, value):

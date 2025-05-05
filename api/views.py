@@ -1,30 +1,26 @@
-from django.shortcuts import render
-from rest_framework import status, response
-from rest_framework import decorators
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import status, response, generics
+from .utils import serializers
+from django.contrib.auth.models import Group
+from .permissions import ManageUserPermissionMixin
 # Create your views here.
 
 
-@decorators.api_view(['GET'])
-@decorators.permission_classes([])
-def index(request):
+class ListCreateRoleView(generics.ListCreateAPIView):
+    queryset = Group.objects.all()
+    serializer_class = serializers.ListCreateGroupSerializer
 
-    return response.Response("Hello", status = status.HTTP_200_OK)
-
-
-@decorators.api_view(['POST'])
-def create_grp(request):
-    pass
+    # def post(self, request, *args, **kwargs):
+    #     print(request.data)
+    #     return response.Response("Successful", status = status.HTTP_200_OK)
+list_create_role = ListCreateRoleView.as_view()
 
 
+class RetrieveUpdateDestroyRoleView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Group.objects.all()
+    serializer_class = serializers.RetrieveUpdateDestroyGroupSerializer
 
-
-@decorators.api_view(['PATCH'])
-def edit_grp(request):
-    pass
-
-
-
-@decorators.api_view(['DELETE'])
-def delete_grp(request):
-    pass
+    def put(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data = request.data)
+        print(serializer)
+        return response.Response("Successful", status = status.HTTP_200_OK)
+retrieve_update_destroy_role = RetrieveUpdateDestroyRoleView.as_view()
