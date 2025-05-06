@@ -29,7 +29,7 @@ class AuthTests(APITestCase):
 
         # Get JWT access token for admin
         token_response = self.client.post(self.token_url, {
-            "username": "Admin",
+            "username": "admin",
             "password": "adminpass123"
         })
         self.access_token = token_response.data["access"]
@@ -48,7 +48,7 @@ class AuthTests(APITestCase):
 
             # Authenticate as the regular user
         token_response = self.client.post(self.token_url, {
-                "username": "Regular",
+                "username": "regular",
                 "password": "userpass123"
             })
         self.regular_token = token_response.data["access"]

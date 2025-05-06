@@ -34,7 +34,8 @@ class ListCreateUserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}  # this hides the password in API responses
         }
 
-    # Tthis create() method to hash password
+    # This create() method to hash password to solve the double hasing of password
+    # if save() method was overwritten in when User model was defined
     def create(self, validated_data):
         password = validated_data.pop("password")
         user = User(**validated_data)
