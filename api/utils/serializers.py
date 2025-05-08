@@ -24,9 +24,16 @@ class RetrieveUpdateDestroyGroupSerializer(serializers.ModelSerializer):
 
     def get_members(self, obj):
             return obj.user_groups.all()
+    
 
-# User Serializer for creating and listing  users
-class ListCreateUserSerializer(serializers.ModelSerializer):
+class ListUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'email', "first_name", "last_name"]
+
+
+# User Serializer for creating  users
+class CreateUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email', 'password']
