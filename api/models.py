@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 
+# staff model
 class User(AbstractUser):
     phone = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
@@ -26,7 +27,26 @@ class User(AbstractUser):
     
     class Meta:
         permissions = [
-            ("can_manage_staffs", "Can manage staffs")
+            ("staff_full_access", "Staff full Access")
         ]
 
 
+# genre model
+class Genre(models.Model):
+    genre = models.CharField(max_length = 32, unique = True, editable = True)
+
+    class Meta:
+        permissions = [
+            ("genre_full_access", "Genre Full Access")
+        ]
+
+
+# author model
+class Author(models.Model):
+    first_name = models.CharField(max_length = 32, unique = True, editable = True, blank = False, null = False)
+    last_name = models.CharField(max_length = 32, unique = True, editable = True, blank = False, null = False)
+
+    class Meta:
+        permissions = [
+            ("author_full_access", "author full Access")
+        ]
