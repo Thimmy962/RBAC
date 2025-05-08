@@ -1,5 +1,5 @@
 from rest_framework import generics, response, status
-from ..permissions import ManageUserPermissionMixin
+from ..permissions import AllModelsPermissionMixin
 from ..models import User
 from . import serializers, validate
 
@@ -7,14 +7,14 @@ from . import serializers, validate
 
 
 
-class ListCreateViewUserView(ManageUserPermissionMixin, generics.ListCreateAPIView):
+class ListCreateViewUserView(AllModelsPermissionMixin, generics.ListCreateAPIView):
     queryset = User.objects.all()
     
 
     def get_serializer_class(self):
         if self.request.method == "POST":
-            return serializers.ListCreateUserSerializer
-        return serializers.RetrieveUpdateDestroyUserSerializer
+            return serializers.CreateUserSerializer
+        return serializers.ListUserSerializer
 
 
     def post(self, request, *args, **kwargs):
@@ -29,7 +29,7 @@ class ListCreateViewUserView(ManageUserPermissionMixin, generics.ListCreateAPIVi
 list_Create_user = ListCreateViewUserView.as_view()
 
 
-class RetrieveUpdateDestroyUserView(ManageUserPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
+class RetrieveUpdateDestroyUserView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = serializers.RetrieveUpdateDestroyUserSerializer
 retrieve_update_destroy_user = RetrieveUpdateDestroyUserView.as_view()
