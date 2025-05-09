@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 
 # staff model
-class User(AbstractUser):
+class Staff(AbstractUser):
     phone = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
     is_staff = models.BooleanField(default=True)
@@ -24,6 +24,12 @@ class User(AbstractUser):
         help_text='Specific permissions for this user.',
         verbose_name='user permissions',
     )
+
+    def has_perm(self, perm, obj=None):
+        return perm in self.get_group_permissions(obj)
+
+    def has_perms(self, perm_list, obj=None):
+        return all(self.has_perm(perm, obj) for perm in perm_list)
     
     class Meta:
         permissions = [
