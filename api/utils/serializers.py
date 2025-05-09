@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import User
+from ..models import Staff
 from django.contrib.auth.models import Group
 
 
@@ -24,40 +24,48 @@ class RetrieveUpdateDestroyGroupSerializer(serializers.ModelSerializer):
 
     def get_members(self, obj):
             return obj.user_groups.all()
+    
 
-# User Serializer for creating and listing  users
-class ListCreateUserSerializer(serializers.ModelSerializer):
+class ListStaffSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = Staff
+        fields = ['username', 'email', "first_name", "last_name"]
+
+
+# User Serializer for creating  users
+class CreateStaffSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Staff
         fields = ['username', 'email', 'password']
         extra_kwargs = {
             'password': {'write_only': True}  # this hides the password in API responses
         }
 
-    # Tthis create() method to hash password
+    # This create() method to hash password to solve the double hasing of password
+    # if save() method was overwritten in when User model was defined
     def create(self, validated_data):
         password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
+        staff = Staff(**validated_data)
+        staff.set_password(password)
+        staff.save()
+        return staff
 
     def validate_email(self, value):
         if value == "":
             return value
-        if User.objects.filter(email=value.lower()).exists():
+        if Staff.objects.filter(email=value.lower()).exists():
             raise serializers.ValidationError("Email already exists")
         return value.lower()
 
     def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
+        if Staff.objects.filter(username=value).exists():
             raise serializers.ValidationError("Username already exists")
         return value
 
 #  User serializer for getting, updating and destroying a user
-class RetrieveUpdateDestroyUserSerializer(serializers.ModelSerializer):
+class RetrieveUpdateDestroyStaffSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = Staff
         fields = ["username", "email",
           "first_name", "last_name", "phone", 
           "address", "is_staff", "is_active",
@@ -68,7 +76,7 @@ class RetrieveUpdateDestroyUserSerializer(serializers.ModelSerializer):
         if value == "":
             return self.instance.email
         value = value.strip().lower()
-        if User.objects.filter(email=value).exclude(pk = self.instance.pk).exists():
+        if Staff.objects.filter(email=value).exclude(pk = self.instance.pk).exists():
             raise serializers.ValidationError("Email already exists")
         
         return value

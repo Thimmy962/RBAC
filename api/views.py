@@ -1,7 +1,7 @@
 from rest_framework import status, response, generics
 from .utils import serializers
 from django.contrib.auth.models import Group
-from .permissions import ManageUserPermissionMixin
+from .permissions import AllModelsPermissionMixin
 # Create your views here.
 
 
