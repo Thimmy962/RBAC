@@ -69,9 +69,9 @@ class AuthTests(APITestCase):
 
     def test_retrieve_staff_with_credentials_of_admin_staff(self):
         url = reverse("retrieve_update_delete_staff", kwargs = {"pk": 20})
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.regular_token}")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         res = self.client.get(url)
-        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.status_code, 404)
 
     def test_authenticated_access_to_protected_view(self):
         """Ensure authenticated staff with proper permissions can access the view."""
