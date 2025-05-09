@@ -11,7 +11,7 @@ class CustomAdminUser(BasePermission):
      
 
 
-class ManageUserPermission(BasePermission):
+class ManageEveryModelPermission(BasePermission):
     """
         This permission checks if: user is an active staff and has the permission to do what it is doing
         Gets the model and the api that contains the model
@@ -67,8 +67,4 @@ class ManageUserPermission(BasePermission):
 
 
 class AllModelsPermissionMixin:
-    permission_classes = [ManageUserPermission]
-
-        
-
-
+    permission_classes = [ManageEveryModelPermission]

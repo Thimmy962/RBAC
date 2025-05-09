@@ -117,7 +117,7 @@ REST_FRAMEWORK = {
 }
 
 
-AUTH_USER_MODEL = "api.User"
+AUTH_USER_MODEL = "api.Staff"
 
 WSGI_APPLICATION = 'RBAC.wsgi.application'
 

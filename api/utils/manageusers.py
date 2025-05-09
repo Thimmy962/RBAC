@@ -1,20 +1,20 @@
 from rest_framework import generics, response, status
 from ..permissions import AllModelsPermissionMixin
-from ..models import User
+from ..models import Staff
 from . import serializers, validate
 
 
 
 
 
-class ListCreateViewUserView(AllModelsPermissionMixin, generics.ListCreateAPIView):
-    queryset = User.objects.all()
+class ListCreateViewStaffView(AllModelsPermissionMixin, generics.ListCreateAPIView):
+    queryset = Staff.objects.all()
     
 
     def get_serializer_class(self):
         if self.request.method == "POST":
-            return serializers.CreateUserSerializer
-        return serializers.ListUserSerializer
+            return serializers.CreateStaffSerializer
+        return serializers.ListStaffSerializer
 
 
     def post(self, request, *args, **kwargs):
@@ -26,10 +26,10 @@ class ListCreateViewUserView(AllModelsPermissionMixin, generics.ListCreateAPIVie
             serializer.save()
             return response.Response("Created Successfully", status=status.HTTP_201_CREATED)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-list_Create_user = ListCreateViewUserView.as_view()
+list_Create_user = ListCreateViewStaffView.as_view()
 
 
-class RetrieveUpdateDestroyUserView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = serializers.RetrieveUpdateDestroyUserSerializer
-retrieve_update_destroy_user = RetrieveUpdateDestroyUserView.as_view()
+class RetrieveUpdateDestroyStaffView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = Staff.objects.all()
+    serializer_class = serializers.RetrieveUpdateDestroyStaffSerializer
+retrieve_update_destroy_user = RetrieveUpdateDestroyStaffView.as_view()
