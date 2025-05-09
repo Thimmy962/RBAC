@@ -5,12 +5,12 @@ from api.models import Staff
 from django.contrib.auth.models import Permission
 
 
-# All the tests here test individual user permission not group permission
+# All the tests here test individual staff permission not group permission
 class AuthTests(APITestCase):
     def setUp(self):
         self.token_url = reverse("token_obtain_pair")
-        self.protected_url = reverse("list_create_user")  # Ensure this name is correctly mapped in your URLs
-        # self.protected_url = reverse("list_create_user")
+        self.protect_list_create_staff_view = reverse("list_create_staff")  # Ensure this name is correctly mapped in your URLs
+        
 
         # Create a superuser with full permissions
         self.admin_staff = Staff.objects.create_user(
@@ -54,34 +54,52 @@ class AuthTests(APITestCase):
             })
         self.regular_token = token_response.data["access"]
 
+    def test_retrieve_staff_without_credentials(self):
+        """Ensure authenticated logged with proper permissionin alone can access this view"""
+        url = reverse("retrieve_update_delete_staff", kwargs = {"pk": 20})
+        self.client.credentials()
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 401)
+
+    def test_retrieve_staff_with_credentials_of_regular_staff(self):
+        url = reverse("retrieve_update_delete_staff", kwargs = {"pk": 20})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.regular_token}")
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 403)
+
+    def test_retrieve_staff_with_credentials_of_admin_staff(self):
+        url = reverse("retrieve_update_delete_staff", kwargs = {"pk": 20})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.regular_token}")
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 400)
 
     def test_authenticated_access_to_protected_view(self):
         """Ensure authenticated staff with proper permissions can access the view."""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        response = self.client.get(self.protected_url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get(self.protect_list_create_staff_view)
+        self.assertEqual(response.status_code, 200)
 
 
     def test_unauthenticated_access_is_denied(self):
         """Ensure access is denied when no credentials are provided."""
         self.client.credentials()  # Clears any previous credentials
-        response = self.client.get(self.protected_url)
-        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+        response = self.client.get(self.protect_list_create_staff_view)
+        self.assertEqual(response.status_code, 401)
 
 
     def test_staff_without_permission_is_denied(self):
         """Ensure that a staff user without the required permissions is denied access."""
 
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.regular_token}")
-        response = self.client.get(self.protected_url)
+        response = self.client.get(self.protect_list_create_staff_view)
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, 403)
 
 
     # Create user while authenticate with superuser to test create url
     def test_create_staff_with_superuser_credentials(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        response = self.client.post(self.protected_url, {
+        response = self.client.post(self.protect_list_create_staff_view, {
             "username": "Thimmy",
             "password": "1234qwer",
             "email": ""
@@ -91,23 +109,23 @@ class AuthTests(APITestCase):
     
     def test_create_staff_without_superuser_credentials(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.regular_token}")
-        response = self.client.post(self.protected_url, {
+        response = self.client.post(self.protect_list_create_staff_view, {
             "username": "Thimmy",
             "password": "1234qwer",
             "email": ""
         })
-        self.assertIn(response.status_code, [401, 403])
+        self.assertEqual(response.status_code, 403)
 
     
     def test_list_staff_with_superuser_credentials(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        response = self.client.get(self.protected_url)
+        response = self.client.get(self.protect_list_create_staff_view)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
     def test_list_staff_without_superuser_credentials(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.regular_token}")
-        response = self.client.get(self.protected_url)
+        response = self.client.get(self.protect_list_create_staff_view)
         self.assertNotEqual(response.status_code, status.HTTP_200_OK)
 
 
@@ -133,5 +151,5 @@ class AuthTests(APITestCase):
 
         # Try accessing the list user api view
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
-        response = self.client.get(self.protected_url)
-        self.assertIn(response.status_code, [403, 401])
+        response = self.client.get(self.protect_list_create_staff_view)
+        self.assertEqual(response.status_code, 403)

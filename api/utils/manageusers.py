@@ -26,10 +26,10 @@ class ListCreateViewStaffView(AllModelsPermissionMixin, generics.ListCreateAPIVi
             serializer.save()
             return response.Response("Created Successfully", status=status.HTTP_201_CREATED)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-list_Create_user = ListCreateViewStaffView.as_view()
+list_create_staff = ListCreateViewStaffView.as_view()
 
 
 class RetrieveUpdateDestroyStaffView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Staff.objects.all()
     serializer_class = serializers.RetrieveUpdateDestroyStaffSerializer
-retrieve_update_destroy_user = RetrieveUpdateDestroyStaffView.as_view()
+retrieve_update_destroy_staff = RetrieveUpdateDestroyStaffView.as_view()
