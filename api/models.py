@@ -35,6 +35,7 @@ class Staff(AbstractUser):
         permissions = [
             ("staff_full_access", "Staff full Access")
         ]
+        ordering = ['username']
 
 
 # genre model
@@ -45,6 +46,7 @@ class Genre(models.Model):
         permissions = [
             ("genre_full_access", "Genre Full Access")
         ]
+        ordering = ['genre']
 
 
 # author model
@@ -56,3 +58,4 @@ class Author(models.Model):
         permissions = [
             ("author_full_access", "author full Access")
         ]
+        ordering = ['first_name', 'last_name']
