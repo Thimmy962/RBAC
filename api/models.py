@@ -26,9 +26,13 @@ class Staff(AbstractUser):
     )
 
     def has_perm(self, perm, obj=None):
+        if self.is_superuser:
+            return True
         return perm in self.get_group_permissions(obj)
 
     def has_perms(self, perm_list, obj=None):
+        if self.is_superuser:
+            return True
         return all(self.has_perm(perm, obj) for perm in perm_list)
     
     class Meta:
