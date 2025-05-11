@@ -52,7 +52,7 @@ class ListGroupSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "permissions", "members"]
 
     def get_members(self, obj):
-            return obj.user_groups.all()
+            return [staff.username for staff in obj.user_groups.all()]
 
 
 
@@ -64,7 +64,7 @@ class RetrieveUpdateDestroyGroupSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "permissions", "members"]
 
     def get_members(self, obj):
-            return obj.user_groups.all()
+            return [staff.username for staff in obj.user_groups.all()]
     
 
 class ListStaffSerializer(serializers.ModelSerializer):
@@ -130,10 +130,10 @@ class CreateStaffSerializer(serializers.ModelSerializer):
 class RetrieveUpdateDestroyStaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = Staff
-        fields = ["username", "email",
+        fields = ["id", "username", "email",
           "first_name", "last_name", "phone", 
           "address", "is_staff", "is_active",
-            "groups", "password"
+            "groups"
         ]
 
     def validate_email(self, value):

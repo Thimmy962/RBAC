@@ -56,19 +56,19 @@ class AuthTests(APITestCase):
 
     def test_retrieve_staff_without_credentials(self):
         """Ensure authenticated logged with proper permissionin alone can access this view"""
-        url = reverse("retrieve_update_delete_staff", kwargs = {"pk": 20})
+        url = reverse("retrieve_update_destroy_staff", kwargs = {"pk": 20})
         self.client.credentials()
         res = self.client.get(url)
         self.assertEqual(res.status_code, 401)
 
     def test_retrieve_staff_with_credentials_of_regular_staff(self):
-        url = reverse("retrieve_update_delete_staff", kwargs = {"pk": 20})
+        url = reverse("retrieve_update_destroy_staff", kwargs = {"pk": 20})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.regular_token}")
         res = self.client.get(url)
         self.assertEqual(res.status_code, 403)
 
     def test_retrieve_staff_with_credentials_of_admin_staff(self):
-        url = reverse("retrieve_update_delete_staff", kwargs = {"pk": 20})
+        url = reverse("retrieve_update_destroy_staff", kwargs = {"pk": 20})
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         res = self.client.get(url)
         self.assertEqual(res.status_code, 404)
