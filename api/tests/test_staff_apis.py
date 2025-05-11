@@ -101,8 +101,8 @@ class AuthTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         response = self.client.post(self.protect_list_create_staff_view, {
             "username": "Thimmy",
-            "password": "1234qwer",
-            "email": ""
+            "password": "Uydnv1$1",
+            "email": "oluwatimileyin@gmail.com" # email has been made compulsory at staff creation
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -112,7 +112,7 @@ class AuthTests(APITestCase):
         response = self.client.post(self.protect_list_create_staff_view, {
             "username": "Thimmy",
             "password": "1234qwer",
-            "email": ""
+            "email": "oluwatimileyin962@gmail.com"
         })
         self.assertEqual(response.status_code, 403)
 

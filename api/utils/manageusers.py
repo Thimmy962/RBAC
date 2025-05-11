@@ -1,7 +1,7 @@
 from rest_framework import generics, response, status
 from ..permissions import AllModelsPermissionMixin
 from ..models import Staff
-from . import serializers, validate
+from . import serializers
 
 
 
@@ -18,10 +18,7 @@ class ListCreateViewStaffView(AllModelsPermissionMixin, generics.ListCreateAPIVi
 
 
     def post(self, request, *args, **kwargs):
-        copied_data = request.data.copy() # request.data is immutable, hence we need to copy it before cleaning it
-
-        cleaned_data = validate.clean_data(copied_data)
-        serializer = self.get_serializer(data=cleaned_data)
+        serializer = self.get_serializer(data=self.request.data)
         if serializer.is_valid():
             serializer.save()
             return response.Response("Created Successfully", status=status.HTTP_201_CREATED)

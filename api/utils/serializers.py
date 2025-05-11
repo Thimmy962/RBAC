@@ -1,10 +1,51 @@
 from rest_framework import serializers
 from ..models import Staff
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.password_validation import validate_password as django_validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 
 
 # Group Serializer for creating and listing Groups
-class ListCreateGroupSerializer(serializers.ModelSerializer):
+class CreateGroupSerializer(serializers.ModelSerializer):
+    permissions = serializers.PrimaryKeyRelatedField(
+        queryset=Permission.objects.all(),
+        many=True,
+        required=True
+    )
+
+    class Meta:
+        model = Group
+        fields = ["name", "permissions"]
+
+    def validate_name(self, value):
+        cleaned = value.strip().title()
+        if cleaned == "":
+            raise serializers.ValidationError("Group name is required")
+        if Group.objects.filter(name=cleaned).exists():
+            raise serializers.ValidationError("Group with this name already exists")
+        return cleaned
+    
+    # makes sure that extra fields besides the required is not sent
+    def to_internal_value(self, data):
+        allowed = set(self.fields)
+        extra = set(data) - allowed
+        if extra:
+            raise serializers.ValidationError(
+                {key: "Unexpected field" for key in extra}
+            )
+        return super().to_internal_value(data)
+
+    def create(self, validated_data):
+        permissions = validated_data.pop("permissions", [])
+        group = Group.objects.create(**validated_data)
+        group.permissions.set(permissions)
+        return group
+    
+
+    
+
+class ListGroupSerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
     class Meta:
         model = Group
@@ -41,6 +82,17 @@ class CreateStaffSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}  # this hides the password in API responses
         }
 
+    # makes sure that extra fields besides the required is not sent
+    def to_internal_value(self, data):
+        allowed = set(self.fields)
+        extra = set(data) - allowed
+        if extra:
+            raise serializers.ValidationError(
+                {key: "Unexpected field" for key in extra}
+            )
+        return super().to_internal_value(data)
+
+
     # This create() method to hash password to solve the double hasing of password
     # if save() method was overwritten in when User model was defined
     def create(self, validated_data):
@@ -51,16 +103,28 @@ class CreateStaffSerializer(serializers.ModelSerializer):
         return staff
 
     def validate_email(self, value):
-        if value == "":
-            return value
-        if Staff.objects.filter(email=value.lower()).exists():
+        value = value.strip().lower()
+        if not value:
+            pass
+        if Staff.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email already exists")
-        return value.lower()
+        return value
 
     def validate_username(self, value):
+        value = value.strip().title()
+        if not value:
+            raise serializers.ValidationError("Username is required")
         if Staff.objects.filter(username=value).exists():
             raise serializers.ValidationError("Username already exists")
         return value
+    
+    def validate_password(self, value):
+        try:
+            django_validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(e.messages)
+        return value
+
 
 #  User serializer for getting, updating and destroying a user
 class RetrieveUpdateDestroyStaffSerializer(serializers.ModelSerializer):
