@@ -6,7 +6,7 @@ from .permissions import AllModelsPermissionMixin
 
 
 class ListCreateRoleView(AllModelsPermissionMixin, generics.ListCreateAPIView):
-    queryset = Group.objects.all()
+    queryset = Group.objects.all().order_by("id")
 
     def get_serializer_class(self):
         if self.request.method == "GET":
