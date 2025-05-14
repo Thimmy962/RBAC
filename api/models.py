@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+import uuid
 
 # staff model
 class Staff(AbstractUser):
@@ -37,14 +38,14 @@ class Staff(AbstractUser):
     
     class Meta:
         permissions = [
-            ("staff_full_access", "Staff full Access")
+            ("staff_full_access", "Staff Full Access")
         ]
         ordering = ['username']
 
 
 # genre model
 class Genre(models.Model):
-    genre = models.CharField(max_length = 32, unique = True, editable = True)
+    genre = models.CharField(max_length=32, unique=True)
 
     class Meta:
         permissions = [
@@ -52,14 +53,35 @@ class Genre(models.Model):
         ]
         ordering = ['genre']
 
+    def __str__(self):
+        return self.genre
+
+
 
 # author model
 class Author(models.Model):
     first_name = models.CharField(max_length = 32, unique = True, editable = True, blank = False, null = False)
     last_name = models.CharField(max_length = 32, unique = True, editable = True, blank = False, null = False)
 
+    def name(self):
+        return f"{self.last_name} {self.first}"
+    
     class Meta:
         permissions = [
-            ("author_full_access", "author full Access")
+            ("author_full_access", "Author Full Access")
         ]
         ordering = ['first_name', 'last_name']
+
+
+class Book(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, unique = True, primary_key = True, auto_created = True)
+    title = models.CharField(max_length = 256, blank = False, null = False)
+    author = models.ManyToManyField(Author, related_name = "author_books", blank = True)
+    genre = models.ManyToManyField(Genre, related_name = "genre_books", blank = True)
+    ISBN = models.CharField(max_length = 24, blank=True)
+
+
+    class Meta:
+        permissions = [
+            ("booK_full_access", "BooK_Full_Access")
+        ]
