@@ -1,8 +1,20 @@
 from rest_framework import status, response, generics
-from .utils import serializers
+from api.utils import serializers
 from django.contrib.auth.models import Group
-from .permissions import AllModelsPermissionMixin
+from api.permissions import AllModelsPermissionMixin
+from api.models import Author, Book, Genre
 # Create your views here.
+
+class ListCreateGenreView(AllModelsPermissionMixin, generics.ListCreateAPIView):
+    queryset = Genre.objects.all()
+    serializer_class = serializers.GenreSerializer
+list_create_genre = ListCreateGenreView.as_view()
+
+
+class RetrieveUpdateDestroygenreView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = Genre.objects.all()
+    serializer_class = serializers.GenreSerializer
+retrieve_update_destroy_genre = RetrieveUpdateDestroygenreView.as_view()
 
 
 class ListCreateRoleView(AllModelsPermissionMixin, generics.ListCreateAPIView):
@@ -10,8 +22,8 @@ class ListCreateRoleView(AllModelsPermissionMixin, generics.ListCreateAPIView):
 
     def get_serializer_class(self):
         if self.request.method == "GET":
-            return serializers.ListGroupSerializer
-        return serializers.CreateGroupSerializer
+            return serializers.ListRoleSerializer
+        return serializers.CreateRoleSerializer
         
 
     def post(self, request, *args, **kwargs):
@@ -20,17 +32,10 @@ class ListCreateRoleView(AllModelsPermissionMixin, generics.ListCreateAPIView):
             serializer.save()
             return response.Response("Role Created Successfully", status=status.HTTP_201_CREATED)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        
 list_create_role = ListCreateRoleView.as_view()
 
 
-class RetrieveUpdateDestroyRoleView(generics.RetrieveUpdateDestroyAPIView):
+class RetrieveRoleView(AllModelsPermissionMixin, generics.RetrieveAPIView):
     queryset = Group.objects.all()
-    serializer_class = serializers.RetrieveUpdateDestroyGroupSerializer
-
-    def put(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data = request.data)
-        print(serializer)
-        return response.Response("Successful", status = status.HTTP_200_OK)
-retrieve_update_destroy_role = RetrieveUpdateDestroyRoleView.as_view()
+    serializer_class = serializers.RetrieveRoleSerializer
+retrieve_role = RetrieveRoleView.as_view()

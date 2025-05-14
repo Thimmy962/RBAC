@@ -1,13 +1,44 @@
 from rest_framework import serializers
-from ..models import Staff
-from django.contrib.auth.models import Group, Permission
+from api.models import Staff, Author, Book, Genre
+from django.contrib.auth.models import Permission, Group
 from django.contrib.auth.password_validation import validate_password as django_validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 
 
-# Group Serializer for creating and listing Groups
-class CreateGroupSerializer(serializers.ModelSerializer):
+class GenreSerializer(serializers.ModelSerializer):
+    books = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Genre
+        fields = ["id", "genre", "books"]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        view = self.context.get("view")
+        if view and view.__class__.__name__ == "ListCreateGenreView":
+            fields.pop("books", None)
+        return fields
+
+    def get_books(self, obj):
+        return [book.title for book in obj.genre_books.all()]
+
+    def validate_genre(self, value):
+        cleaned = value.strip().title()
+        if not cleaned:
+            raise serializers.ValidationError("Genre name is required")
+        if Genre.objects.filter(genre=cleaned).exclude(pk=self.instance.pk if self.instance else None).exists():
+            raise serializers.ValidationError("Genre with this name already exists")
+        return cleaned
+
+    def update(self, instance, validated_data):
+        instance.genre = validated_data.get("genre", instance.genre)
+        instance.save()
+        return instance
+
+# Group Serializer for creating Groups
+class CreateRoleSerializer(serializers.ModelSerializer):
+    # this makes sure that before a role is created the permissions attached to the roles are valid 
     permissions = serializers.PrimaryKeyRelatedField(
         queryset=Permission.objects.all(),
         many=True,
@@ -20,10 +51,8 @@ class CreateGroupSerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         cleaned = value.strip().title()
-        if cleaned == "":
-            raise serializers.ValidationError("Group name is required")
-        if Group.objects.filter(name=cleaned).exists():
-            raise serializers.ValidationError("Group with this name already exists")
+        if not cleaned: raise serializers.ValidationError("Group name is required")
+        if Group.objects.filter(name=cleaned).exists(): raise serializers.ValidationError("Group with this name already exists")
         return cleaned
     
     # makes sure that extra fields besides the required is not sent
@@ -43,13 +72,12 @@ class CreateGroupSerializer(serializers.ModelSerializer):
         return group
     
 
-    
 
-class ListGroupSerializer(serializers.ModelSerializer):
+class ListRoleSerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
     class Meta:
         model = Group
-        fields = ["id", "name", "permissions", "members"]
+        fields = ["id", "name", "members", "permissions"]
 
     def get_members(self, obj):
             return [staff.username for staff in obj.user_groups.all()]
@@ -57,7 +85,7 @@ class ListGroupSerializer(serializers.ModelSerializer):
 
 
 # Group Serializer for retrieving, updating and destroying roles/groups
-class RetrieveUpdateDestroyGroupSerializer(serializers.ModelSerializer):
+class RetrieveRoleSerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
     class Meta:
         model = Group

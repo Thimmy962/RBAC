@@ -1,7 +1,7 @@
 from rest_framework import generics, response, status
-from ..permissions import AllModelsPermissionMixin
-from ..models import Staff
-from . import serializers
+from api.permissions import AllModelsPermissionMixin
+from api.models import Staff
+from api.utils import serializers
 
 
 
