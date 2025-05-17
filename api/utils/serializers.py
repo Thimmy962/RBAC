@@ -5,10 +5,52 @@ from django.contrib.auth.password_validation import validate_password as django_
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 
+class BookSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = ["id", "title", "genre", "author"]
+
+    def validate_title(self, value):
+        clean = value.strip().title()
+        if not clean: raise serializers.validationError("Book title required")
+        if Book.objects.filter(title = clean).exclude(pk = self.instance.pk if self.instance else None):
+            return self.instance.title
+        return clean
+
+
+class AuthorSerializer(serializers.ModelSerializer):
+    books = serializers.SerializerMethodField()
+    class Meta:
+        model = Author
+        fields = ["id", "first_name", "last_name", "books"]
+
+    def get_books(self, obj):
+        return [book.title for book in obj.author_books.all()]
+    
+    def get_fields(self):
+        fields = super().get_fields()
+        view = self.context.get("view")
+        if view and view.__class__.__name__ == "ListCreateAuthorView":
+            fields.pop("books", None)
+        return fields
+
+    def validate_first_name(self, value):
+        cleaned = value.strip().title()
+        if not cleaned: raise serializers.validationError("First name is required")
+        if Author.objects.filter(first_name = cleaned).exclude(pk = self.instance.pk if self.instance else None):
+            return self.instance.first_name
+        return cleaned
+    
+    def validate_last_name(self, value):
+        cleaned = value.strip().title()
+        if not cleaned: raise serializers.validationError("Last name is required")
+        if Author.objects.filter(first_name = cleaned).exclude(pk = self.instance.pk if self.instance else None):
+            return self.instance.last_name
+        return cleaned
+
 
 class GenreSerializer(serializers.ModelSerializer):
     books = serializers.SerializerMethodField()
-
     class Meta:
         model = Genre
         fields = ["id", "genre", "books"]
@@ -36,18 +78,32 @@ class GenreSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-# Group Serializer for creating Groups
-class CreateRoleSerializer(serializers.ModelSerializer):
-    # this makes sure that before a role is created the permissions attached to the roles are valid 
-    permissions = serializers.PrimaryKeyRelatedField(
-        queryset=Permission.objects.all(),
-        many=True,
-        required=True
-    )
 
+# Group Serializer for creating Groups
+class ListCreateRoleSerializer(serializers.ModelSerializer):
+    members = serializers.SerializerMethodField()
+    member_count = serializers.SerializerMethodField()
+    permission_count = serializers.SerializerMethodField()
     class Meta:
         model = Group
-        fields = ["name", "permissions"]
+        fields = ["id", "name", "members", "permissions", "permission_count", "member_count"]
+
+    def get_members(self, obj):
+            return [staff.username for staff in obj.user_groups.all()]
+    
+    def get_member_count(self, obj):
+        return obj.user_groups.all().count()
+
+    def get_permission_count(self, obj):
+        return obj.permissions.count()
+    
+    def get_fields(self):
+        fields = super().get_fields()
+        view = self.context.get("view")
+        if view and view.__class__.__name__ == "ListCreateRoleView":
+            fields.pop("members", None)
+            fields.pop("permissions", None)
+        return fields
 
     def validate_name(self, value):
         cleaned = value.strip().title()
@@ -65,36 +121,26 @@ class CreateRoleSerializer(serializers.ModelSerializer):
             )
         return super().to_internal_value(data)
 
-    def create(self, validated_data):
-        permissions = validated_data.pop("permissions", [])
-        group = Group.objects.create(**validated_data)
-        group.permissions.set(permissions)
-        return group
-    
-
-
-class ListRoleSerializer(serializers.ModelSerializer):
-    members = serializers.SerializerMethodField()
-    class Meta:
-        model = Group
-        fields = ["id", "name", "members", "permissions"]
-
-    def get_members(self, obj):
-            return [staff.username for staff in obj.user_groups.all()]
-
-
 
 # Group Serializer for retrieving, updating and destroying roles/groups
-class RetrieveRoleSerializer(serializers.ModelSerializer):
+class RetrieveUpdateDestroyRoleSerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
+    member_count = serializers.SerializerMethodField()
+    permission_count = serializers.SerializerMethodField()
     class Meta:
         model = Group
-        fields = ["id", "name", "permissions", "members"]
+        fields = ["id", "name", "members", "permissions", "permission_count", "member_count"]
 
     def get_members(self, obj):
             return [staff.username for staff in obj.user_groups.all()]
     
+    def get_member_count(self, obj):
+        return obj.user_groups.all().count()
 
+    def get_permission_count(self, obj):
+        return obj.permissions.count()
+
+    
 class ListStaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = Staff
@@ -119,7 +165,6 @@ class CreateStaffSerializer(serializers.ModelSerializer):
                 {key: "Unexpected field" for key in extra}
             )
         return super().to_internal_value(data)
-
 
     # This create() method to hash password to solve the double hasing of password
     # if save() method was overwritten in when User model was defined
