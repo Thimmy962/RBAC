@@ -41,6 +41,9 @@ class Staff(AbstractUser):
             ("staff_full_access", "Staff Full Access")
         ]
         ordering = ['username']
+    
+    def __str__(self):
+        return f"{self.username.title()}"
 
 
 # genre model
@@ -71,6 +74,9 @@ class Author(models.Model):
             ("author_full_access", "Author Full Access")
         ]
         ordering = ['first_name', 'last_name']
+    
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
 
 
 class Book(models.Model):
@@ -85,3 +91,6 @@ class Book(models.Model):
         permissions = [
             ("booK_full_access", "BooK_Full_Access")
         ]
+
+    def __str__(self):
+        return self.title

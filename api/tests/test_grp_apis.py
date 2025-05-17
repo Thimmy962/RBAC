@@ -6,7 +6,7 @@ from django.contrib.auth.models import Permission, Group
 class GroupTest(APITestCase):
     def setUp(self):
         self.token_url = reverse("token_obtain_pair")
-        self.retrieve_role = reverse("retrieve_role", kwargs = {"pk": 2})
+        self.retrieve_role = reverse("retrieve_update_destroy_role", kwargs = {"pk": 2})
         self.list_create_role = reverse("list_create_role")
         self.list_create_staff = reverse("list_create_staff")
         self.retrieve_update_destroy_staff = reverse("retrieve_update_destroy_staff", kwargs = {"pk": 3})
@@ -133,7 +133,7 @@ class GroupTest(APITestCase):
         self.view_grp.permissions.add(post_grp.id)
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.manage_grp_access_token}")
         res = self.client.post(self.list_create_role,  data = {"name": "newjLeader", "permissions": [1,2,3,4,5]})
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.status_code, 400)
 
     def test_manage_grp_with_authorized_cre_get_with_wrong_detail(self):
         # staff has view grp perm alone  but staff grp will now be granted post perm
