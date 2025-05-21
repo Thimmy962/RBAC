@@ -4,3 +4,5 @@ djangorestframework-simplejwt
 django-cors-headers
 gunicorn
 python-dotenv
+redis
+django-redis
