@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+from django.core.exceptions import PermissionDenied
 
 
 """
@@ -68,3 +69,38 @@ class ManageEveryModelPermission(BasePermission):
 
 class AllModelsPermissionMixin:
     permission_classes = [ManageEveryModelPermission]
+
+
+
+
+def permissions_decorator(model_class):    
+    def decorator(func):
+        def wrapper(self, info, *args, **kwargs):
+            print("Hello")
+            user = info.context.user
+            if user:
+                print(user)
+            if not bool(user and user.is_authenticated and user.is_staff and user.is_active):
+                raise PermissionDenied("User should be authenticated, be a staff and be active")
+            if user.is_superuser:
+                return func(self, info, *args, **kwargs)
+
+            
+            app_label = model_class._meta.app_label
+            model_name = model_class.__name__.lower()
+
+            full_access_perm = f"{app_label}.{model_name}_full_access"
+            if user.has_perm(full_access_perm):
+                return func(self, info, *args, **kwargs)
+
+
+            permission = f"{app_label}.view_{model_name}"
+            if user.has_perm(permission):
+                return func(self, info, *args, **kwargs)
+            
+            raise PermissionDenied("User not Authorized")
+        return wrapper
+    return decorator
+
+            
+

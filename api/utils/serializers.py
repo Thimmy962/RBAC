@@ -16,23 +16,24 @@ class BookSerializer(serializers.ModelSerializer):
         if Book.objects.filter(title = clean).exclude(pk = self.instance.pk if self.instance else None):
             return self.instance.title
         return clean
+    
+        # makes sure that extra fields besides the required is not sent
+    def to_internal_value(self, data):
+        allowed = set(self.fields)
+        extra = set(data) - allowed
+        if extra:
+            raise serializers.ValidationError(
+                {key: "Unexpected field" for key in extra}
+            )
+        return super().to_internal_value(data)
 
 
 class AuthorSerializer(serializers.ModelSerializer):
     books = serializers.SerializerMethodField()
     class Meta:
         model = Author
-        fields = ["id", "first_name", "last_name", "books"]
-
-    def get_books(self, obj):
-        return [book.title for book in obj.author_books.all()]
+        fields = ["id", "first_name", "last_name"]
     
-    def get_fields(self):
-        fields = super().get_fields()
-        view = self.context.get("view")
-        if view and view.__class__.__name__ == "ListCreateAuthorView":
-            fields.pop("books", None)
-        return fields
 
     def validate_first_name(self, value):
         cleaned = value.strip().title()
@@ -47,23 +48,23 @@ class AuthorSerializer(serializers.ModelSerializer):
         if Author.objects.filter(first_name = cleaned).exclude(pk = self.instance.pk if self.instance else None):
             return self.instance.last_name
         return cleaned
+    
+        # makes sure that extra fields besides the required is not sent
+    def to_internal_value(self, data):
+        allowed = set(self.fields)
+        extra = set(data) - allowed
+        if extra:
+            raise serializers.ValidationError(
+                {key: "Unexpected field" for key in extra}
+            )
+        return super().to_internal_value(data)
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    books = serializers.SerializerMethodField()
     class Meta:
         model = Genre
-        fields = ["id", "genre", "books"]
+        fields = ["id", "genre"]
 
-    def get_fields(self):
-        fields = super().get_fields()
-        view = self.context.get("view")
-        if view and view.__class__.__name__ == "ListCreateGenreView":
-            fields.pop("books", None)
-        return fields
-
-    def get_books(self, obj):
-        return [book.title for book in obj.genre_books.all()]
 
     def validate_genre(self, value):
         cleaned = value.strip().title()
@@ -77,10 +78,20 @@ class GenreSerializer(serializers.ModelSerializer):
         instance.genre = validated_data.get("genre", instance.genre)
         instance.save()
         return instance
+    
+        # makes sure that extra fields besides the required is not sent
+    def to_internal_value(self, data):
+        allowed = set(self.fields)
+        extra = set(data) - allowed
+        if extra:
+            raise serializers.ValidationError(
+                {key: "Unexpected field" for key in extra}
+            )
+        return super().to_internal_value(data)
 
 
 # Group Serializer for creating Groups
-class ListCreateRoleSerializer(serializers.ModelSerializer):
+class CreateRoleSerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
     member_count = serializers.SerializerMethodField()
     permission_count = serializers.SerializerMethodField()
@@ -88,22 +99,9 @@ class ListCreateRoleSerializer(serializers.ModelSerializer):
         model = Group
         fields = ["id", "name", "members", "permissions", "permission_count", "member_count"]
 
-    def get_members(self, obj):
-            return [staff.username for staff in obj.user_groups.all()]
-    
-    def get_member_count(self, obj):
-        return obj.user_groups.all().count()
-
     def get_permission_count(self, obj):
         return obj.permissions.count()
-    
-    def get_fields(self):
-        fields = super().get_fields()
-        view = self.context.get("view")
-        if view and view.__class__.__name__ == "ListCreateRoleView":
-            fields.pop("members", None)
-            fields.pop("permissions", None)
-        return fields
+
 
     def validate_name(self, value):
         cleaned = value.strip().title()
@@ -122,8 +120,8 @@ class ListCreateRoleSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 
-# Group Serializer for retrieving, updating and destroying roles/groups
-class RetrieveUpdateDestroyRoleSerializer(serializers.ModelSerializer):
+# Group Serializer for updating and destroying roles/groups
+class UpdateDestroyRoleSerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
     member_count = serializers.SerializerMethodField()
     permission_count = serializers.SerializerMethodField()
@@ -141,7 +139,7 @@ class RetrieveUpdateDestroyRoleSerializer(serializers.ModelSerializer):
         return obj.permissions.count()
 
     
-class ListStaffSerializer(serializers.ModelSerializer):
+class StaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = Staff
         fields = ['username', 'email', "first_name", "last_name"]
@@ -157,14 +155,14 @@ class CreateStaffSerializer(serializers.ModelSerializer):
         }
 
     # makes sure that extra fields besides the required is not sent
-    def to_internal_value(self, data):
-        allowed = set(self.fields)
-        extra = set(data) - allowed
-        if extra:
-            raise serializers.ValidationError(
-                {key: "Unexpected field" for key in extra}
-            )
-        return super().to_internal_value(data)
+    # def to_internal_value(self, data):
+    #     allowed = set(self.fields)
+    #     extra = set(data) - allowed
+    #     if extra:
+    #         raise serializers.ValidationError(
+    #             {key: "Unexpected field" for key in extra}
+    #         )
+    #     return super().to_internal_value(data)
 
     # This create() method to hash password to solve the double hasing of password
     # if save() method was overwritten in when User model was defined
@@ -200,7 +198,7 @@ class CreateStaffSerializer(serializers.ModelSerializer):
 
 
 #  User serializer for getting, updating and destroying a user
-class RetrieveUpdateDestroyStaffSerializer(serializers.ModelSerializer):
+class UpdateDestroyStaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = Staff
         fields = ["id", "username", "email",

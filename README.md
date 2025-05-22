@@ -1,3 +1,6 @@
+# This Branch was created so that every get request will be offloaded to graphQL
+# This way, frontend can dyanmically retrieve data without waiting for backend to add another api
+
 # Role-Based Access Control (RBAC) for Library Management System
 
 A Django-based backend system that manages **staff access to library resources** using **role-based access control**. It controls what staff can access and the actions they are permitted to carry out within the system.

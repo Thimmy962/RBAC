@@ -1,4 +1,4 @@
-from rest_framework import status, response, generics
+from rest_framework import status, response, generics, decorators
 from api.utils import serializers
 from django.contrib.auth.models import Group
 from api.permissions import AllModelsPermissionMixin
@@ -6,59 +6,54 @@ from api.models import Author, Book, Genre
 # Create your views here.
 
 
-# TO CREATE OR LIST BOOK
-class ListCreateBookView(generics.ListCreateAPIView):
+# TO CREATE BOOK
+class CreateBookView(AllModelsPermissionMixin, generics.CreateAPIView):
     queryset = Book.objects.all()
     serializer_class = serializers.BookSerializer
-list_create_book = ListCreateBookView.as_view()
+create_book = CreateBookView.as_view()
 
-class RetrieveUpdateDestroyBookView(generics.RetrieveUpdateDestroyAPIView):
+# UPDATE OR DESTROY Book
+class UpdateDestroyBookView(AllModelsPermissionMixin, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = serializers.BookSerializer
 
     def put(self, request, *args, **kwargs):
         return self.patch(request, *args, **kwargs)
-retrieve_update_destroy_book = RetrieveUpdateDestroyBookView.as_view()
+update_destroy_book = UpdateDestroyBookView.as_view()
 
 
-# TO CREATE OR LIST AUTHOR
-class ListCreateAuthorView(AllModelsPermissionMixin, generics.ListCreateAPIView):
+# TO CREATE AUTHOR
+class CreateAuthorView(AllModelsPermissionMixin, generics.CreateAPIView):
     queryset = Author.objects.all()
     serializer_class = serializers.AuthorSerializer
-list_create_author = ListCreateAuthorView.as_view()
+create_author = CreateAuthorView.as_view()
 
 
-# RETRIEVE, UPDATE OR DESTROY AUTHOR
-class RetrieveUpdateDestroyAuthorView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
+# UPDATE OR DESTROY AUTHOR
+class UpdateDestroyAuthorView(AllModelsPermissionMixin, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Author.objects.all()
     serializer_class = serializers.AuthorSerializer
-retrieve_update_destroy_author = RetrieveUpdateDestroyAuthorView.as_view()
+update_destroy_author = UpdateDestroyAuthorView.as_view()
 
 
-# RETRIEVE, UPDATE OR DESTROY AUTHOR
-class RetrieveUpdateDestroyAuthorView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
-    queryset = Author.objects.all()
-    serializer_class = serializers.AuthorSerializer
-retrieve_update_destroy_author = RetrieveUpdateDestroyAuthorView.as_view()
-
-# TO CREATE OR LIST GENRE
-class ListCreateGenreView(AllModelsPermissionMixin, generics.ListCreateAPIView):
+# TO CREATE GENRE
+class CreateGenreView(AllModelsPermissionMixin, generics.CreateAPIView):
     queryset = Genre.objects.all()
     serializer_class = serializers.GenreSerializer
-list_create_genre = ListCreateGenreView.as_view()
+create_genre = CreateGenreView.as_view()
 
 
 # RETRIEVE, UPDATE OR DESTROY GENRE
-class RetrieveUpdateDestroyGenreView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
+class UpdateDestroyGenreView(AllModelsPermissionMixin, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Genre.objects.all()
     serializer_class = serializers.GenreSerializer
-retrieve_update_destroy_genre = RetrieveUpdateDestroyGenreView.as_view()
+update_destroy_genre = UpdateDestroyGenreView.as_view()
 
 
 # TO CREATE OR LIST ROLE
-class ListCreateRoleView(AllModelsPermissionMixin, generics.ListCreateAPIView):
+class CreateRoleView(AllModelsPermissionMixin, generics.CreateAPIView):
     queryset = Group.objects.all().order_by("id")
-    serializer_class = serializers.ListCreateRoleSerializer
+    serializer_class = serializers.CreateRoleSerializer
         
 
     def post(self, request, *args, **kwargs):
@@ -67,13 +62,13 @@ class ListCreateRoleView(AllModelsPermissionMixin, generics.ListCreateAPIView):
             serializer.save()
             return response.Response("Role Created Successfully", status=status.HTTP_201_CREATED)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-list_create_role = ListCreateRoleView.as_view()
+create_role = CreateRoleView.as_view()
 
 
 # RETRIEVE, UPDATE OR DESTROY ROLE
-class RetrieveUpdateDestroyRoleView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
+class UpdateDestroyRoleView(AllModelsPermissionMixin, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Group.objects.all()
-    serializer_class = serializers.RetrieveUpdateDestroyRoleSerializer
+    serializer_class = serializers.UpdateDestroyRoleSerializer
 
     def put(self, request, *args, **kwargs):
         return self.patch(request, *args, **kwargs)
@@ -81,4 +76,4 @@ class RetrieveUpdateDestroyRoleView(AllModelsPermissionMixin, generics.RetrieveU
     def delete(self, request, *args, **kwargs):
         self.destroy(request, *args, **kwargs)
         return response.Response("Role Deleted Successfully", status = 204)
-retrieve_update_destroy_role = RetrieveUpdateDestroyRoleView.as_view()
+update_destroy_role = UpdateDestroyRoleView.as_view()
