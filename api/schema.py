@@ -44,11 +44,6 @@ class PermissionType(DjangoObjectType):
     class Meta:
         model = models.Permission
 
-    # user_permissions = graphene.List(lambda: StaffType)
-
-    # def resolve_user_permissions(self, info):
-    #     self.user_permissions.all()
-
 
 class Query(graphene.ObjectType):
     # Staff resolvers
@@ -133,5 +128,4 @@ class Query(graphene.ObjectType):
         return models.Book.objects.get(id = id)
 
     
-
 schema = graphene.Schema(query = Query)
