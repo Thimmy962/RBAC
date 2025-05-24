@@ -61,11 +61,4 @@ create_role = CreateRoleView.as_view()
 class UpdateDestroyRoleView(AllModelsPermissionMixin, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Group.objects.all()
     serializer_class = serializers.UpdateDestroyRoleSerializer
-
-    def put(self, request, *args, **kwargs):
-        return self.patch(request, *args, **kwargs)
-    
-    def delete(self, request, *args, **kwargs):
-        self.destroy(request, *args, **kwargs)
-        return response.Response("Role Deleted Successfully", status = 204)
 update_destroy_role = UpdateDestroyRoleView.as_view()

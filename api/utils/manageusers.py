@@ -7,10 +7,11 @@ from api.utils import serializers
 
 
 
-class CreateViewStaffView(generics.CreateAPIView):
+class ListCreateViewStaffView(AllModelsPermissionMixin, generics.CreateAPIView):
     queryset = Staff.objects.all()
     serializer_class = serializers.CreateStaffSerializer
-create_staff = CreateViewStaffView.as_view()
+        
+create_staff = ListCreateViewStaffView.as_view()
 
 
 class UpdateDestroyStaffView(AllModelsPermissionMixin, generics.UpdateAPIView, generics.DestroyAPIView):
