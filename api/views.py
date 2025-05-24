@@ -54,14 +54,6 @@ update_destroy_genre = UpdateDestroyGenreView.as_view()
 class CreateRoleView(AllModelsPermissionMixin, generics.CreateAPIView):
     queryset = Group.objects.all().order_by("id")
     serializer_class = serializers.CreateRoleSerializer
-        
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=self.request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return response.Response("Role Created Successfully", status=status.HTTP_201_CREATED)
-        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 create_role = CreateRoleView.as_view()
 
 

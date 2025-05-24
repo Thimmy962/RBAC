@@ -7,17 +7,9 @@ from api.utils import serializers
 
 
 
-class CreateViewStaffView(AllModelsPermissionMixin, generics.CreateAPIView):
+class CreateViewStaffView(generics.CreateAPIView):
     queryset = Staff.objects.all()
     serializer_class = serializers.CreateStaffSerializer
-    
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=self.request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return response.Response("Created Successfully", status=status.HTTP_201_CREATED)
-        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 create_staff = CreateViewStaffView.as_view()
 
 
