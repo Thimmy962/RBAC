@@ -154,18 +154,20 @@ class CreateStaffSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}  # this hides the password in API responses
         }
 
-    # makes sure that extra fields besides the required is not sent
-    # def to_internal_value(self, data):
-    #     allowed = set(self.fields)
-    #     extra = set(data) - allowed
-    #     if extra:
-    #         raise serializers.ValidationError(
-    #             {key: "Unexpected field" for key in extra}
-    #         )
-    #     return super().to_internal_value(data)
+    # makes sure that extra fields besides the required are not sent
+    def to_internal_value(self, data):
+        allowed = set(self.fields)
+        # django middleware adds csrfmiddlewaretoken field with a token for safety which is not part of the allowed serialized fields defined above
+        # The line below adds csrfmiddlewaretoken field to the allowed fields   
+        allowed.add('csrfmiddlewaretoken')
+        extra = set(data) - allowed
+        if extra:
+            raise serializers.ValidationError(
+                {key: "Unexpected field" for key in extra}
+            )
+        return super().to_internal_value(data)
 
     # This create() method to hash password to solve the double hasing of password
-    # if save() method was overwritten in when User model was defined
     def create(self, validated_data):
         password = validated_data.pop("password")
         staff = Staff(**validated_data)
