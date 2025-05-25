@@ -167,7 +167,6 @@ class CreateStaffSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
     # This create() method to hash password to solve the double hasing of password
-    # if save() method was overwritten in when User model was defined
     def create(self, validated_data):
         password = validated_data.pop("password")
         staff = Staff(**validated_data)
