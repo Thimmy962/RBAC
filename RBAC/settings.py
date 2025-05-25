@@ -53,7 +53,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'api.utils.middleware.SimpleJWTGraphQLMiddleware'
+    'api.utils.middleware.SimpleJWTGraphQLMiddleware',
+    'api.utils.middleware.MaintenanceMiddleware'
 ]
 
 SIMPLE_JWT = {
@@ -179,3 +180,5 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+MAINTENANCE_MODE = False

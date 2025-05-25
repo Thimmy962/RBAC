@@ -76,15 +76,11 @@ class AllModelsPermissionMixin:
 def permissions_decorator(model_class):    
     def decorator(func):
         def wrapper(self, info, *args, **kwargs):
-            print("Hello")
             user = info.context.user
-            if user:
-                print(user)
             if not bool(user and user.is_authenticated and user.is_staff and user.is_active):
                 raise PermissionDenied("User should be authenticated, be a staff and be active")
             if user.is_superuser:
                 return func(self, info, *args, **kwargs)
-
             
             app_label = model_class._meta.app_label
             model_name = model_class.__name__.lower()

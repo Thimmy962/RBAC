@@ -153,3 +153,15 @@ RBAC/
 ## 📬 Contribution & Feedback
 
 Feel free to fork this repository, submit issues, or open pull requests for improvements. Feedback is always welcome!
+
+## 📬 Contribution & Feedback
+
+## 👨‍⚖️ Middleware
+
+- A custom middleware (SimpleJWTGraphQLMiddleware) was written to solve the incompatibility in authenticating user issue graphene has with JWT
+- Another (MaintenanceMiddleware) was written for maintenance purposes
+
+check API.utils.middleware for their definiton
+
+When undergoing maintenance:
+- set settings.MAINTENANCE_MODE to True

@@ -10,9 +10,11 @@ This document provides a reference for all available API endpoints in the **RBAC
 >
 > ```python
 > path("api/", include("api.urls"))
+> path("graph/", GraphQLView.as_view(graphiql = True))
 > ```
 > 
-> This means all app routes (e.g., users, books, authors) are accessed under the `/api/` prefix.
+> This means all except get request routes (e.g., users, books, authors) are accessed under the `/api/` prefix.
+> All get request are accessed with no just `/graph?query = query {....}` and the query 
 
 ---
 
@@ -33,16 +35,16 @@ This document provides a reference for all available API endpoints in the **RBAC
 
 ## 👤 Staff Management
 
-### 🔸 List or Create Staff
+### 🔸 Create Staff
 
-**GET/POST** `/api/users/`  
-**Description:**  
-- `GET`: Retrieve a list of all staff users.  
+**POST** `/api/users/`  
+**Description:**   
 - `POST`: Create a new staff user.
 
-### 🔸 Retrieve, Update or Delete a Staff
 
-**GET/PUT/PATCH/DELETE** `/api/user/<int:pk>`  
+### 🔸 Update or Delete a Staff
+
+**PUT/PATCH/DELETE** `/api/user/<int:pk>`  
 **Description:**  
 Manage a single staff user by their primary key (`pk`).
 
@@ -50,16 +52,14 @@ Manage a single staff user by their primary key (`pk`).
 
 ## 👥 Group/Role Management
 
-### 🔸 List or Create Role
 
-**GET/POST** `/api/groups/`  
-**Description:**  
-- `GET`: Retrieve a list of all roles/groups.  
+**POST** `/api/groups/`  
+**Description:**    
 - `POST`: Create a new role/group.
 
-### 🔸 Retrieve, Update or Delete a Role
+### 🔸 Update or Delete a Role
 
-**GET/PUT/PATCH/DELETE** `/api/group/<int:pk>`  
+**PUT/PATCH/DELETE** `/api/group/<int:pk>`  
 **Description:**  
 Manage a specific role/group by its primary key (`pk`).  
 
@@ -68,16 +68,15 @@ Manage a specific role/group by its primary key (`pk`).
 
 ## 🎭 Genre Management
 
-### 🔸 List or Create Genre
+### 🔸 Create Genre
 
-**GET/POST** `/api/genres/`  
+**POST** `/api/genres/`  
 **Description:**  
-- `GET`: List all book genres.  
 - `POST`: Create a new genre.
 
-### 🔸 Retrieve, Update or Delete a Genre
+### 🔸 Update or Delete a Genre
 
-**GET/PUT/PATCH/DELETE** `/api/genre/<int:pk>`  
+**PUT/PATCH/DELETE** `/api/genre/<int:pk>`  
 **Description:**  
 Manage a single genre by its primary key.
 
@@ -85,16 +84,15 @@ Manage a single genre by its primary key.
 
 ## ✍️ Author Management
 
-### 🔸 List or Create Author
+### 🔸 Create Author
 
-**GET/POST** `/api/authors/`  
+**POST** `/api/authors/`  
 **Description:**  
-- `GET`: Retrieve all authors.  
 - `POST`: Create a new author.
 
-### 🔸 Retrieve, Update or Delete an Author
+### 🔸 Update or Delete an Author
 
-**GET/PUT/PATCH/DELETE** `/api/author/<int:pk>`  
+**PUT/PATCH/DELETE** `/api/author/<int:pk>`  
 **Description:**  
 Manage a single author by primary key.
 
@@ -102,16 +100,15 @@ Manage a single author by primary key.
 
 ## 📚 Book Management
 
-### 🔸 List or Create Book
+### 🔸 Create Book
 
-**GET/POST** `/api/books/`  
-**Description:**  
-- `GET`: Retrieve all books.  
+**POST** `/api/books/`  
+**Description:**
 - `POST`: Create a new book.
 
-### 🔸 Retrieve, Update or Delete a Book
+### 🔸 Update or Delete a Book
 
-**GET/PUT/PATCH/DELETE** `/api/book/<str:pk>`  
+**PUT/PATCH/DELETE** `/api/book/<str:pk>`  
 **Description:**  
 Manage a single book by primary key (can be a string, e.g., accession number or UUID).
 
@@ -120,6 +117,7 @@ Manage a single book by primary key (can be a string, e.g., accession number or 
 ## 🔁 Status Codes
 
 All API responses follow standard HTTP status codes:
+- This applies to the Post, update, and Delete Requets 
 
 - `200 OK` – Success  
 - `201 Created` – Resource created  
@@ -129,11 +127,15 @@ All API responses follow standard HTTP status codes:
 - `403 Forbidden` – Permission denied  
 - `404 Not Found` – Resource not found
 
+- Get Requests uses graphql which send:
+- `200 OK` – Success; alone
+
+Errors in `graph` api is detected by checking for the ##errors## field in the response
 ---
 
 ## 📝 Notes
 
-- All `POST`, `PUT`, and `PATCH` endpoints require authentication via JWT.  
+- All endpoints require authentication via JWT.  
 - Ensure to include `Authorization: Bearer <access_token>` in the request header.
 
 ---
