@@ -1,7 +1,7 @@
-# This Branch was created so that every get request will be offloaded to graphQL
-# This way, frontend can dyanmically retrieve data without waiting for backend to add another api
+## This Branch was created so that every get request will be offloaded to graphQL
+## This way, frontend can dyanmically retrieve data without waiting for backend to add another api
 
-# Role-Based Access Control (RBAC) for Library Management System
+## Role-Based Access Control (RBAC) for Library Management System
 
 A Django-based backend system that manages **staff access to library resources** using **role-based access control**. It controls what staff can access and the actions they are permitted to carry out within the system.
 
@@ -158,10 +158,10 @@ Feel free to fork this repository, submit issues, or open pull requests for impr
 
 ## 👨‍⚖️ Middleware
 
-- A custom middleware (SimpleJWTGraphQLMiddleware) was written to solve the incompatibility in authenticating user issue graphene has with JWT
-- Another (MaintenanceMiddleware) was written for maintenance purposes
+A custom middleware (SimpleJWTGraphQLMiddleware) was written to solve the incompatibility in authenticating user issue graphene has with JWT
+Another (MaintenanceMiddleware) was written for maintenance purposes
 
-check API.utils.middleware for their definiton
+check API.utils.middleware for their definitons
 
 When undergoing maintenance:
 - set settings.MAINTENANCE_MODE to True
