@@ -1,4 +1,4 @@
-from rest_framework import generics, response, status
+from rest_framework import generics
 from api.permissions import AllModelsPermissionMixin
 from api.models import Staff
 from api.utils import serializers
@@ -9,7 +9,6 @@ from api.utils import serializers
 
 class ListCreateViewStaffView(AllModelsPermissionMixin, generics.ListCreateAPIView):
     queryset = Staff.objects.all()
-    
 
     def get_serializer_class(self):
         if self.request.method == "POST":
