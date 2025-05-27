@@ -13,8 +13,8 @@ class BookSerializer(serializers.ModelSerializer):
     def validate_title(self, value):
         clean = value.strip().title()
         if not clean: raise serializers.validationError("Book title required")
-        if Book.objects.filter(title = clean).exclude(pk = self.instance.pk if self.instance else None):
-            return self.instance.title
+        if Book.objects.filter(title = clean).exists:
+             raise serializers.ValidationError(f"Book with this title: '{clean}' already exists")
         return clean
     
         # makes sure that extra fields besides the required is not sent
@@ -97,15 +97,15 @@ class GenreSerializer(serializers.ModelSerializer):
 
 # Group Serializer for creating Groups
 class CreateRoleSerializer(serializers.ModelSerializer):
-    members = serializers.SerializerMethodField()
+    members = serializers.PrimaryKeyRelatedField(
+        queryset = Staff.objects.all(), many = True, write_only =True
+    )
     member_count = serializers.SerializerMethodField()
     permission_count = serializers.SerializerMethodField()
     class Meta:
         model = Group
         fields = ["id", "name", "members", "permissions", "permission_count", "member_count"]
 
-    def get_members(self, obj):
-            return [staff.username for staff in obj.user_groups.all()]
     
     def get_member_count(self, obj):
         return obj.user_groups.all().count()
@@ -132,6 +132,14 @@ class CreateRoleSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 
+    def create(self, validated_data):
+        members = validated_data.pop("members", [])
+        permissions = validated_data.pop("permissions", [])
+        group = Group.objects.create(**validated_data)
+        group.permissions.set(permissions)
+        for member in members:
+                member.groups.add(group)
+        return group
 # Group Serializer for updating and destroying roles/groups
 class UpdateDestroyRoleSerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
@@ -149,12 +157,6 @@ class UpdateDestroyRoleSerializer(serializers.ModelSerializer):
 
     def get_permission_count(self, obj):
         return obj.permissions.count()
-
-    
-class StaffSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Staff
-        fields = ['username', 'email', "first_name", "last_name"]
 
 
 # User Serializer for creating  users
@@ -189,8 +191,6 @@ class CreateStaffSerializer(serializers.ModelSerializer):
         value = value.strip().lower()
         if not value:
             pass
-        if Staff.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already exists")
         return value
 
     def validate_username(self, value):
