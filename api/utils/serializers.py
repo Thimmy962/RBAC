@@ -20,6 +20,9 @@ class BookSerializer(serializers.ModelSerializer):
         # makes sure that extra fields besides the required is not sent
     def to_internal_value(self, data):
         allowed = set(self.fields)
+        # django middleware adds csrfmiddlewaretoken field with a token for safety which is not part of the allowed serialized fields defined above
+        # The line below adds csrfmiddlewaretoken field to the allowed fields   
+        allowed.add('csrfmiddlewaretoken')
         extra = set(data) - allowed
         if extra:
             raise serializers.ValidationError(
@@ -52,6 +55,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         # makes sure that extra fields besides the required is not sent
     def to_internal_value(self, data):
         allowed = set(self.fields)
+        allowed.add('csrfmiddlewaretoken')
         extra = set(data) - allowed
         if extra:
             raise serializers.ValidationError(
@@ -82,6 +86,7 @@ class GenreSerializer(serializers.ModelSerializer):
         # makes sure that extra fields besides the required is not sent
     def to_internal_value(self, data):
         allowed = set(self.fields)
+        allowed.add('csrfmiddlewaretoken')
         extra = set(data) - allowed
         if extra:
             raise serializers.ValidationError(
@@ -99,6 +104,12 @@ class CreateRoleSerializer(serializers.ModelSerializer):
         model = Group
         fields = ["id", "name", "members", "permissions", "permission_count", "member_count"]
 
+    def get_members(self, obj):
+            return [staff.username for staff in obj.user_groups.all()]
+    
+    def get_member_count(self, obj):
+        return obj.user_groups.all().count()
+
     def get_permission_count(self, obj):
         return obj.permissions.count()
 
@@ -112,6 +123,7 @@ class CreateRoleSerializer(serializers.ModelSerializer):
     # makes sure that extra fields besides the required is not sent
     def to_internal_value(self, data):
         allowed = set(self.fields)
+        allowed.add('csrfmiddlewaretoken')
         extra = set(data) - allowed
         if extra:
             raise serializers.ValidationError(
@@ -157,8 +169,6 @@ class CreateStaffSerializer(serializers.ModelSerializer):
     # makes sure that extra fields besides the required are not sent
     def to_internal_value(self, data):
         allowed = set(self.fields)
-        # django middleware adds csrfmiddlewaretoken field with a token for safety which is not part of the allowed serialized fields defined above
-        # The line below adds csrfmiddlewaretoken field to the allowed fields   
         allowed.add('csrfmiddlewaretoken')
         extra = set(data) - allowed
         if extra:
