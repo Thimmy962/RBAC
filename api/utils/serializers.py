@@ -17,6 +17,16 @@ class BookSerializer(serializers.ModelSerializer):
             return self.instance.title
         return clean
 
+    def to_internal_value(self, data):
+        allowed = set(self.fields)
+        allowed.add("csrfmiddlewaretoken")
+        extra = set(data) - allowed
+        if extra:
+            raise serializers.ValidationError(
+                {key: "Unexpected field" for key in extra}
+            )
+        return super().to_internal_value(data)
+
 
 class AuthorSerializer(serializers.ModelSerializer):
     books = serializers.SerializerMethodField()
@@ -25,7 +35,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         fields = ["id", "first_name", "last_name", "books"]
 
     def get_books(self, obj):
-        return [book.title for book in obj.author_books.all()]
+        return [book for book in obj.author_books.all()]
     
     def get_fields(self):
         fields = super().get_fields()
@@ -47,6 +57,16 @@ class AuthorSerializer(serializers.ModelSerializer):
         if Author.objects.filter(first_name = cleaned).exclude(pk = self.instance.pk if self.instance else None):
             return self.instance.last_name
         return cleaned
+
+    def to_internal_value(self, data):
+        allowed = set(self.fields)
+        allowed.add("csrfmiddlewaretoken")
+        extra = set(data) - allowed
+        if extra:
+            raise serializers.ValidationError(
+                {key: "Unexpected field" for key in extra}
+            )
+        return super().to_internal_value(data)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -77,6 +97,19 @@ class GenreSerializer(serializers.ModelSerializer):
         instance.genre = validated_data.get("genre", instance.genre)
         instance.save()
         return instance
+
+    # makes sure that extra fields besides the required is not sent
+    # the csrf token field comes as a security measure with django, so it is been added to the expected fields
+    # This way it will not be flagged as an unexpected field
+    def to_internal_value(self, data):
+        allowed = set(self.fields)
+        allowed.add("csrfmiddlewaretoken")
+        extra = set(data) - allowed
+        if extra:
+            raise serializers.ValidationError(
+                {key: "Unexpected field" for key in extra}
+            )
+        return super().to_internal_value(data)
 
 
 # Group Serializer for creating Groups
@@ -114,6 +147,7 @@ class ListCreateRoleSerializer(serializers.ModelSerializer):
     # makes sure that extra fields besides the required is not sent
     def to_internal_value(self, data):
         allowed = set(self.fields)
+        allowed.add("csrfmiddlewaretoken")
         extra = set(data) - allowed
         if extra:
             raise serializers.ValidationError(
@@ -156,9 +190,9 @@ class CreateStaffSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}  # this hides the password in API responses
         }
 
-    # makes sure that extra fields besides the required is not sent
     def to_internal_value(self, data):
         allowed = set(self.fields)
+        allowed.add("csrfmiddlewaretoken")
         extra = set(data) - allowed
         if extra:
             raise serializers.ValidationError(
