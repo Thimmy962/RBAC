@@ -7,17 +7,6 @@ from django.core.cache import cache
 
 _thread_local = threading.local()
 
-# @receiver(m2m_changed, sender=Group.permissions.through)
-# def update_group_permission_cache(sender, instance, action, **kwargs):
-
-#     if action == 'post_add':
-#         perms = instance.permissions.all()
-#         print(perms)
-#         perm_list = [perm.codename for perm in perms]
-#         cache.set(instance.name, perm_list, timeout=None)
-#     elif action == 'post_clear':
-#         # permissions have been cleared manually or via .set([])
-#         cache.delete(instance.name)
 
 # delete cache for this grp if the grp is deleted
 @receiver(pre_delete, sender=Group)
@@ -46,3 +35,4 @@ def update_group_permission_cache(sender, instance, action, **kwargs):
         cache.set(instance.name, perm_list, timeout=None)
         # Clear the flag after caching
         _thread_local.in_set_operation = False
+
