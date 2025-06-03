@@ -184,9 +184,15 @@ REST_FRAMEWORK = {
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/0",
+        "LOCATION": os.environ.get("BROKER_URL"),
     }
 }
+
+# CELERY SETTINGS
+BROKER_URL = os.environ.get("BROKER_URL")
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 
 MAINTENANCE_MODE = False

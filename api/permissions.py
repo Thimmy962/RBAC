@@ -36,6 +36,9 @@ class ManageEveryModelPermission(BasePermission):
         
         user = request.user
 
+        if user.is_superuser:
+            return True
+
         # get model being worked on
         model = getattr(getattr(view, 'queryset', None), 'model', None)
         if not model:
@@ -52,7 +55,7 @@ class ManageEveryModelPermission(BasePermission):
         full_access_perm = f"{app_label}.{model_name}_full_access"
 
         
-        if request.user.has_perm(full_access_perm):
+        if user.has_perm(full_access_perm):
             return True
 
         # what permission is required for this request method
@@ -84,6 +87,7 @@ def permissions_decorator(model_class):
             
             app_label = model_class._meta.app_label
             model_name = model_class.__name__.lower()
+
 
             full_access_perm = f"{app_label}.{model_name}_full_access"
             if user.has_perm(full_access_perm):
