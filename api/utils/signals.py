@@ -1,38 +1,30 @@
-import threading
-from django.db.models.signals import pre_delete
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.contrib.auth.models import Group
-from django.core.cache import cache
+from api.tasks import cache_staffs_permission_on_grp_perm_change, cache_a_staff_group_perms
+from django.contrib.auth import get_user_model
 
-_thread_local = threading.local()
-
-
-# delete cache for this grp if the grp is deleted
-@receiver(pre_delete, sender=Group)
-def clear_group_cache_on_delete(sender, instance, **kwargs):
-    cache.delete(instance.name)
-
+Staff = get_user_model()
 
 
 
 @receiver(m2m_changed, sender=Group.permissions.through)
-def update_group_permission_cache(sender, instance, action, **kwargs):
-    print("Caching")
-    if action == 'pre_clear':
-        # Mark this thread as doing a set operation
-        _thread_local.in_set_operation = True
+def update_users_perms_in_a_grp(sender, instance, action, **kwargs):
+    """
+        If there is a change in the permissions of a group
+        Call the "cache_staffs_permission_on_grp_perm_change" background task function to cache the accumulated grp permissions 
+            of all the staffs in that group.
+    """
+    if action in ('post_add', 'post_remove', 'post_clear'):
+       cache_staffs_permission_on_grp_perm_change.delay(instance.id)
 
 
-    elif action == 'post_clear':
-        # Only clear the cache if no add is coming after
-        if not getattr(_thread_local, 'in_set_operation', False):
-            cache.delete(instance.name)
 
-    elif action == 'post_add':
-        perms = instance.permissions.all()
-        perm_list = [perm.codename for perm in perms]
-        cache.set(instance.name, perm_list, timeout=None)
-        # Clear the flag after caching
-        _thread_local.in_set_operation = False
-
+@receiver(m2m_changed, sender=Staff.groups.through)
+def update_user_perms_on_grp_change(sender, instance, action, **kwargs):
+    """
+        If there is any change in the grp of this user
+        Call the "cache_a_staff_group_perms" background task fucntion to cache the accumulated grp permissions to the user id
+    """
+    if action in ('post_add', 'post_remove', 'post_clear'):
+       cache_a_staff_group_perms.delay(instance.id)
