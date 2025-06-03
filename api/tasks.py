@@ -18,7 +18,7 @@ def cache_a_staff_group_perms(user_id):
     Staff = get_user_model()
     try:
         user = Staff.objects.prefetch_related('groups__permissions').get(id=user_id)
-        perms = [perm.lower() for perm in user.get_group_permissions()]
+        perms = user.get_group_permissions()
         perms_list = set(perms)
         cache.set(f"{user_id}", perms_list)
     except Staff.DoesNotExist:

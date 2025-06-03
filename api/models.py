@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 import uuid
 from django.core.cache import cache
+from api.tasks import cache_a_staff_group_perms
 
 
 # staff model
@@ -28,31 +29,10 @@ class Staff(AbstractUser):
         verbose_name='user permissions',
     )
 
-    def has_perm(self, perm, obj=None):
-        if self.is_superuser:
-            return True
-        return perm in self.get_group_permissions(obj)
-
-
-
     # def has_perm(self, perm, obj=None):
-    #     # 'perm' is something like 'api.add_author' — split to get codename
-    #     try:
-    #         codename = perm.split('.')[1]
-    #     except IndexError:
-    #         return False  # Not a valid perm format
-
-    #     print(f"Checking permission codename: {codename}")
-
     #     if self.is_superuser:
     #         return True
-
-    #     for grp in self.groups.all():
-    #         cached_perms = cache.get(grp.name)
-    #         if cached_perms and codename in cached_perms:
-    #             return True
-    #     return False
-
+    #     return perm in self.get_group_permissions(obj)
             
 
     def has_perms(self, perm_list, obj=None):
@@ -68,6 +48,19 @@ class Staff(AbstractUser):
     
     def __str__(self):
         return f"{self.username.title()}"
+
+
+
+    def has_perm(self, perm, obj=None):
+        # superuser has been checked before has_perm was called in the AllPermissionMixins
+        perms = cache.get(self.id, [])
+
+        if perm in perms:
+            return True
+
+        # Trigger background cache generation if missing
+        cache_a_staff_group_perms.delay(self.id)
+        return False
 
 
 # genre model
@@ -113,7 +106,7 @@ class Book(models.Model):
 
     class Meta:
         permissions = [
-            ("booK_full_access", "BooK_Full_Access")
+            ("book_full_access", "BooK Full Access")
         ]
 
     def __str__(self):
