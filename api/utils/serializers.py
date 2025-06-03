@@ -140,6 +140,8 @@ class CreateRoleSerializer(serializers.ModelSerializer):
         for member in members:
                 member.groups.add(group)
         return group
+
+
 # Group Serializer for updating and destroying roles/groups
 class UpdateDestroyRoleSerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
@@ -161,9 +163,12 @@ class UpdateDestroyRoleSerializer(serializers.ModelSerializer):
 
 # User Serializer for creating  users
 class CreateStaffSerializer(serializers.ModelSerializer):
+    roles = serializers.PrimaryKeyRelatedField(
+        queryset = Group.objects.all(), many = True, write_only =True
+    )
     class Meta:
         model = Staff
-        fields = ['username', 'email', 'password']
+        fields = ['username', 'email', 'password', 'roles']
         extra_kwargs = {
             'password': {'write_only': True}  # this hides the password in API responses
         }
@@ -182,9 +187,11 @@ class CreateStaffSerializer(serializers.ModelSerializer):
     # This create() method to hash password to solve the double hasing of password
     def create(self, validated_data):
         password = validated_data.pop("password")
+        roles = validated_data.pop("roles", [])
         staff = Staff(**validated_data)
         staff.set_password(password)
         staff.save()
+        staff.groups.set(roles)
         return staff
 
     def validate_email(self, value):
