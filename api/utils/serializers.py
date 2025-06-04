@@ -10,12 +10,15 @@ class BookSerializer(serializers.ModelSerializer):
         model = Book
         fields = ["id", "title", "genre", "author"]
 
+
     def validate_title(self, value):
         clean = value.strip().title()
-        if not clean: raise serializers.validationError("Book title required")
-        if Book.objects.filter(title = clean).exists:
-             raise serializers.ValidationError(f"Book with this title: '{clean}' already exists")
+        if not clean:
+            raise serializers.ValidationError("Book title required")
+        if Book.objects.filter(title=clean).exists():
+            raise serializers.ValidationError(f"Book with this title: '{clean}' already exists")
         return clean
+
     
         # makes sure that extra fields besides the required is not sent
     def to_internal_value(self, data):
@@ -32,7 +35,6 @@ class BookSerializer(serializers.ModelSerializer):
 
 
 class AuthorSerializer(serializers.ModelSerializer):
-    books = serializers.SerializerMethodField()
     class Meta:
         model = Author
         fields = ["id", "first_name", "last_name"]
