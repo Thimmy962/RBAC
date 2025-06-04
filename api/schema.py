@@ -34,11 +34,18 @@ class GenreType(DjangoObjectType):
 class AuthorType(DjangoObjectType):
     class Meta:
         model = models.Author
+    
+    books = graphene.List(lambda: BookType)
+
+    def resolve_book(self, info):
+        return self.author_books.all()
+
 
 
 class BookType(DjangoObjectType):
     class Meta:
         model = models.Book
+
 
 class PermissionType(DjangoObjectType):
     class Meta:
@@ -52,7 +59,7 @@ class Query(graphene.ObjectType):
 
     @permissions_decorator(models.Staff)
     def resolve_staffs(self, info):
-        res = models.Staff.objects.all()
+        return models.Staff.objects.all()
     
 
     @permissions_decorator(models.Staff)
@@ -92,11 +99,11 @@ class Query(graphene.ObjectType):
     
     @permissions_decorator(models.Author)
     def resolve_authors(self, info, **kwargs):
-        return models.Staff.objects.all()
+        return models.Author.objects.all()
 
     @permissions_decorator(models.Author)
     def resolve_author(self, info, id):
-        return models.Staff.objects.get(id = id)
+        return models.Author.objects.get(id = id)
 
     
     # Permission resolvers
