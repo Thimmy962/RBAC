@@ -1,3 +1,5 @@
+# All the serializers here for for creating models alone
+
 from rest_framework import serializers
 from api.models import Staff, Author, Book, Genre
 from django.contrib.auth.models import Permission, Group
@@ -5,7 +7,7 @@ from django.contrib.auth.password_validation import validate_password as django_
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 
-class BookSerializer(serializers.ModelSerializer):
+class CreateBookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
         fields = ["id", "title", "genre", "author"]
@@ -34,7 +36,7 @@ class BookSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 
-class AuthorSerializer(serializers.ModelSerializer):
+class CreateAuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Author
         fields = ["id", "first_name", "last_name"]
@@ -42,16 +44,14 @@ class AuthorSerializer(serializers.ModelSerializer):
 
     def validate_first_name(self, value):
         cleaned = value.strip().title()
-        if not cleaned: raise serializers.validationError("First name is required")
-        if Author.objects.filter(first_name = cleaned).exclude(pk = self.instance.pk if self.instance else None):
-            return self.instance.first_name
+        if not cleaned: # If no first name is given while creating this author raise an error
+            raise serializers.validationError("First name is required")
         return cleaned
     
     def validate_last_name(self, value):
         cleaned = value.strip().title()
-        if not cleaned: raise serializers.validationError("Last name is required")
-        if Author.objects.filter(first_name = cleaned).exclude(pk = self.instance.pk if self.instance else None):
-            return self.instance.last_name
+        if not cleaned:
+            raise serializers.validationError("Last name is required")
         return cleaned
     
         # makes sure that extra fields besides the required is not sent
@@ -66,7 +66,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 
-class GenreSerializer(serializers.ModelSerializer):
+class CreateGenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ["id", "genre"]
@@ -76,15 +76,11 @@ class GenreSerializer(serializers.ModelSerializer):
         cleaned = value.strip().title()
         if not cleaned:
             raise serializers.ValidationError("Genre name is required")
-        if Genre.objects.filter(genre=cleaned).exclude(pk=self.instance.pk if self.instance else None).exists():
-            raise serializers.ValidationError("Genre with this name already exists")
+        if Genre.objects.get(genre = cleaned).exists():
+            raise serializers.ValidationError("Genre with this name already Exists")
         return cleaned
 
-    def update(self, instance, validated_data):
-        instance.genre = validated_data.get("genre", instance.genre)
-        instance.save()
-        return instance
-    
+
         # makes sure that extra fields besides the required is not sent
     def to_internal_value(self, data):
         allowed = set(self.fields)
@@ -102,24 +98,19 @@ class CreateRoleSerializer(serializers.ModelSerializer):
     members = serializers.PrimaryKeyRelatedField(
         queryset = Staff.objects.all(), many = True, write_only =True
     )
-    member_count = serializers.SerializerMethodField()
-    permission_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
-        fields = ["id", "name", "members", "permissions", "permission_count", "member_count"]
-
-    
-    def get_member_count(self, obj):
-        return obj.user_groups.all().count()
-
-    def get_permission_count(self, obj):
-        return obj.permissions.count()
-
+        fields = ["id", "name", "members", "permissions"]
 
     def validate_name(self, value):
         cleaned = value.strip().title()
-        if not cleaned: raise serializers.ValidationError("Group name is required")
-        if Group.objects.filter(name=cleaned).exists(): raise serializers.ValidationError("Group with this name already exists")
+        if not cleaned:
+            raise serializers.ValidationError("Group name is required")
+        
+        if Group.objects.get(name = cleaned).exists():
+            raise serializers.ValidationError("Group with this name already Exists")
+        
         return cleaned
     
     # makes sure that extra fields besides the required is not sent
@@ -142,25 +133,6 @@ class CreateRoleSerializer(serializers.ModelSerializer):
         for member in members:
                 member.groups.add(group)
         return group
-
-
-# Group Serializer for updating and destroying roles/groups
-class UpdateDestroyRoleSerializer(serializers.ModelSerializer):
-    members = serializers.SerializerMethodField()
-    member_count = serializers.SerializerMethodField()
-    permission_count = serializers.SerializerMethodField()
-    class Meta:
-        model = Group
-        fields = ["id", "name", "members", "permissions", "permission_count", "member_count"]
-
-    def get_members(self, obj):
-            return [staff.username for staff in obj.user_groups.all()]
-    
-    def get_member_count(self, obj):
-        return obj.user_groups.all().count()
-
-    def get_permission_count(self, obj):
-        return obj.permissions.count()
 
 
 # User Serializer for creating  users
@@ -215,36 +187,4 @@ class CreateStaffSerializer(serializers.ModelSerializer):
             django_validate_password(value)
         except DjangoValidationError as e:
             raise serializers.ValidationError(e.messages)
-        return value
-
-
-#  User serializer for getting, updating and destroying a user
-class UpdateDestroyStaffSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Staff
-        fields = ["id", "username", "email",
-          "first_name", "last_name", "phone", 
-          "address", "is_staff", "is_active",
-            "groups"
-        ]
-
-    def validate_email(self, value):
-        if value == "":
-            return self.instance.email
-        value = value.strip().lower()
-        if Staff.objects.filter(email=value).exclude(pk = self.instance.pk).exists():
-            raise serializers.ValidationError("Email already exists")
-        
-        return value
-    
-    def validate_first_name(self, value):
-        if value == "":
-            return self.instance.first_name
-        value = value.strip().title()
-        return value
-    
-    def validate_last_name(self, value):
-        if value == "":
-            return self.instance.last_name
-        value = value.strip().title()
         return value
