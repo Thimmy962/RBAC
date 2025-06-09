@@ -32,11 +32,16 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
+from django.http import JsonResponse
+
+def healthz(request):
+    return JsonResponse({"status": "ok"})
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include("api.urls")),
-    path("graph/", GraphQLView.as_view(graphiql = True))
+    path("graph/", GraphQLView.as_view(graphiql = True)),
+    path("healthz", healthz)
 ]
