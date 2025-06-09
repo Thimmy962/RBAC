@@ -85,6 +85,14 @@ ALLOWED_HOSTS = ['your_production_domain_or_ip']
 ```
 
 Update database settings as needed.
+Update cache settings as need
+
+##### Run cache first: command depends on the cache
+##### Run celery using
+```bash
+celery -A RBAC worker -c 10
+```
+
 
 ---
 
@@ -94,9 +102,19 @@ Update database settings as needed.
 
 ```bash
 python manage.py makemigrations
+```
+
+```bash
 python manage.py migrate
+```
+
+#### Before running the server
+- 
+
+```bash
 python manage.py runserver
 ```
+
 
 ### Create a Superuser
 
@@ -109,7 +127,7 @@ Follow the prompts to set up the admin account.
 ### Production (Example with Gunicorn)
 
 ```bash
-gunicorn RBAC.wsgi
+gunicorn RBAC.wsgi:application
 ```
 
 ---

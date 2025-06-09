@@ -101,6 +101,3 @@ def permissions_decorator(model_class):
             raise PermissionDenied("User not Authorized")
         return wrapper
     return decorator
-
-            
-

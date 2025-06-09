@@ -7,3 +7,7 @@ python-dotenv
 graphene-django
 django-redis
 celery[redis]
+dj-database-url
+psycopg2-binary
+drf-spectacular
+locust

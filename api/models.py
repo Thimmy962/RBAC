@@ -28,11 +28,6 @@ class Staff(AbstractUser):
         help_text='Specific permissions for this user.',
         verbose_name='user permissions',
     )
-
-    # def has_perm(self, perm, obj=None):
-    #     if self.is_superuser:
-    #         return True
-    #     return perm in self.get_group_permissions(obj)
             
 
     def has_perms(self, perm_list, obj=None):
@@ -50,11 +45,9 @@ class Staff(AbstractUser):
         return f"{self.username.title()}"
 
 
-
     def has_perm(self, perm, obj=None):
         # superuser has been checked before has_perm was called in the AllPermissionMixins
         perms = cache.get(self.id, [])
-
         if perm in perms:
             return True
 
