@@ -1,22 +1,25 @@
+from functools import wraps
+from graphql import GraphQLError  # Optional: for better GraphQL-specific errors
 from rest_framework.permissions import BasePermission
-from django.core.exceptions import PermissionDenied
 
+SAFE_METHODS = ("GET", "OPTIONS", "HEAD")
 
-"""
-Permissions to manage user
-"""
 class CustomAdminUser(BasePermission):
-     def has_permission(self, request, view):
-          user = request.user
-          return bool(user and user.is_authenticated and user.is_staff and user.is_active)
-     
+    """
+    Grants access only to authenticated, active, staff users.
+    """
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(user and user.is_authenticated and user.is_staff and user.is_active)
 
 
 class ManageEveryModelPermission(BasePermission):
     """
-        This permission checks if: user is an active staff and has the permission to do what it is doing
-        Gets the model and the api that contains the model
-        Gets the corresponding perm for the request method from the perms_map
+    Grants access to specific model actions based on:
+    - Active staff check
+    - Superuser override
+    - Full-access permission (model_name_full_access)
+    - Mapped permission for request method (add, change, delete, view)
     """
     perms_map = {
         'GET': 'view',
@@ -29,45 +32,35 @@ class ManageEveryModelPermission(BasePermission):
     }
 
     def has_permission(self, request, view):
-        # check if the user is an admin
-        admin_check = CustomAdminUser().has_permission(request, view)
-        if not admin_check:
-            return False
-        
         user = request.user
+
+        # Admin pre-check
+        if not CustomAdminUser().has_permission(request, view):
+            return False
 
         if user.is_superuser:
             return True
 
-        # get model being worked on
         model = getattr(getattr(view, 'queryset', None), 'model', None)
-        if not model:
-            return False
-        
-        # get the api under which the model is
-        app_label = model._meta.app_label
+        if model is None:
+            return False  # You may want to log this for debugging
 
-        # get the model namem
+        app_label = model._meta.app_label
         model_name = model._meta.model_name
 
-        # Cstom Super-permission: model_name_full_access
-        # Was created for each model while defining each model
+        # Check full-access permission
         full_access_perm = f"{app_label}.{model_name}_full_access"
-
-        
         if user.has_perm(full_access_perm):
             return True
 
-        # what permission is required for this request method
-        # each request method is mapped to its corresponding perm in the perms_map variable above
-        required_perm = self.perms_map.get(request.method)
-        if not required_perm:
+        # Map HTTP method to Django permission type
+        perm_action = self.perms_map.get(request.method)
+        if perm_action is None:
             return False
-        
-        # if the current user have the permission for this request method for this model
-        # for instance, does this user have the add perm which correspond with the post request method for user model 
-        specific_perm = f"{app_label}.{required_perm}_{model_name}"
+
+        specific_perm = f"{app_label}.{perm_action}_{model_name}"
         return user.has_perm(specific_perm)
+
 
 
 class AllModelsPermissionMixin:
@@ -75,29 +68,45 @@ class AllModelsPermissionMixin:
 
 
 
-
-def permissions_decorator(model_class):    
+def permissions_decorator(model_class):
     def decorator(func):
+        @wraps(func)
         def wrapper(self, info, *args, **kwargs):
             user = info.context.user
-            if not bool(user and user.is_authenticated and user.is_staff and user.is_active):
-                raise PermissionDenied("User should be authenticated, be a staff and be active")
+
+            if not (user and user.is_authenticated and user.is_active and user.is_staff):
+                raise GraphQLError(
+                    message="Authentication required: user must be active staff.",
+                    extensions={
+                        "code": "AUTH_REQUIRED",
+                        "reason": "Inactive or unauthenticated staff user",
+                        "http_status": 401
+                    }
+                )
+
             if user.is_superuser:
                 return func(self, info, *args, **kwargs)
-            
+
             app_label = model_class._meta.app_label
-            model_name = model_class.__name__.lower()
+            model_name = model_class._meta.model_name
 
+            required_perms = [
+                f"{app_label}.{model_name}_full_access",
+                f"{app_label}.view_{model_name}",
+            ]
 
-            full_access_perm = f"{app_label}.{model_name}_full_access"
-            if user.has_perm(full_access_perm):
+            if any(user.has_perm(perm) for perm in required_perms):
                 return func(self, info, *args, **kwargs)
 
-
-            permission = f"{app_label}.view_{model_name}"
-            if user.has_perm(permission):
-                return func(self, info, *args, **kwargs)
-            
-            raise PermissionDenied("User not Authorized")
+            raise GraphQLError(
+                message="Permission denied: insufficient access rights.",
+                extensions={
+                    "code": "PERMISSION_DENIED",
+                    "model": model_name,
+                    "app": app_label,
+                    "required": required_perms,
+                    "http_status": 403
+                }
+            )
         return wrapper
     return decorator
