@@ -9,3 +9,5 @@ staticfiles/
 dump.rdb
 logs.txt
 .env
+*.sql
+load.py

@@ -13,13 +13,6 @@ class GroupType(DjangoObjectType):
     class Meta:
         model = models.Group
 
-    # get the members in this group
-    members = graphene.List(lambda: StaffType)
-    
-    # members are gotten through reverse query of the group
-    def resolve_members(self, info):
-        return self.user_groups.all()
-
 
 class PermissionType(DjangoObjectType):
     class Meta:
@@ -34,10 +27,6 @@ class GenreType(DjangoObjectType):
 class AuthorType(DjangoObjectType):
     class Meta:
         model = models.Author
-    books = graphene.List(lambda: BookType)
-
-    def resolve_books(self, info):
-        return self.author_books.all()
 
 
 class BookType(DjangoObjectType):
@@ -51,13 +40,12 @@ class PermissionType(DjangoObjectType):
 
 class Query(graphene.ObjectType):
     # Staff resolvers
-    staffs = graphene.List(StaffType)
+    staffs = graphene.List(StaffType, offset=graphene.Int(), limit=graphene.Int())
     staff = graphene.Field(StaffType, id = graphene.Int(required = True))
 
     @permissions_decorator(models.Staff)
-    def resolve_staffs(self, info):
-        return models.Staff.objects.all()
-    
+    def resolve_staffs(self, info, offset=0, limit=10):
+        return models.Staff.objects.all()[offset : offset + limit]
 
     @permissions_decorator(models.Staff)
     def resolve_staff(self, info, id):
@@ -65,51 +53,52 @@ class Query(graphene.ObjectType):
     
 
     # Group resolvers
-    groups = graphene.List(GroupType)
+    groups = graphene.List(GroupType, offset=graphene.Int(), limit=graphene.Int())
     group = graphene.Field(GroupType, id = graphene.Int(required = True))
 
     @permissions_decorator(models.Group)
-    def resolve_groups(self, info, **kwargs):
-        return models.Group.objects.all()
+    def resolve_groups(self, info, offset=0, limit=5):
+        return models.Group.objects.prefetch_related('members', 'permissions').all()[offset : offset + limit]
 
     @permissions_decorator(models.Group)
     def resolve_group(self, info, id):
-        return models.Group.objects.get(id = id)
+        return models.Group.objects.prefetch_related('members', 'permissions').get(id=id)
+
 
 
     # Genre resolvers
-    genres = graphene.List(GenreType)
+    genres = graphene.List(GenreType, offset=graphene.Int(), limit=graphene.Int())
     genre = graphene.Field(GenreType, id = graphene.Int(required = True))
 
     @permissions_decorator(models.Genre)
-    def resolve_genres(self, info, **kwargs):
-        return models.Genre.objects.all()
+    def resolve_genres(self, info, offset = 0, limit = 10):
+        return models.Genre.objects.prefetch_related('genre_books').all()[offset: offset + limit]
 
     @permissions_decorator(models.Genre)
     def resolve_genre(self, info, id):
-        return models.Genre.objects.get(id = id)
+        return models.Genre.objects.prefetch_related('genre_books').get(id = id)
 
 
     # Author resolvers
-    authors = graphene.List(AuthorType)
+    authors = graphene.List(AuthorType, offset = graphene.Int(), limit = graphene.Int())
     author = graphene.Field(AuthorType, id = graphene.Int(required = True))
     
     @permissions_decorator(models.Author)
-    def resolve_authors(self, info, **kwargs):
-        return models.Author.objects.all()
+    def resolve_authors(self, info, offset = 0, limit = 40):
+        return models.Author.objects.prefetch_related('author_books').all()[offset:offset+limit]
 
     @permissions_decorator(models.Author)
     def resolve_author(self, info, id):
-        return models.Author.objects.get(id = id)
+        return models.Author.objects.prefetch_related('author_books').get(id = id)
 
     
     # Permission resolvers
-    permissions = graphene.List(PermissionType)
+    permissions = graphene.List(PermissionType, offset = graphene.Int(), limit = graphene.Int())
     permission = graphene.Field(PermissionType, id = graphene.Int(required = True))
 
     @permissions_decorator(models.Permission)
-    def resolve_permissions(self, info):
-        return models.Permission.objects.all()
+    def resolve_permissions(self, info, offset = 0, limit = 10):
+        return models.Permission.objects.all()[offset:offset+limit]
 
 
     @permissions_decorator(models.Permission)
@@ -119,17 +108,17 @@ class Query(graphene.ObjectType):
     
 
     # Book resolvers
-    books = graphene.List(BookType)
+    books = graphene.List(BookType, offset= graphene.Int(), limit = graphene.Int())
     book = graphene.Field(BookType, id = graphene.String(required = True))
 
     @permissions_decorator(models.Book)
-    def resolve_books(self, info):
-        return models.Book.objects.all()
+    def resolve_books(self, info, offset = 0, limit = 50):
+        return models.Book.objects.prefetch_related('author', 'genre').all()[offset : limit + offset]
 
 
     @permissions_decorator(models.Book)
     def resolve_book(self, info, id):
-        return models.Book.objects.get(id = id)
+        return models.Book.objects.prefetch_related('author', 'genre').get(id = id)
 
     
 schema = graphene.Schema(query = Query)
