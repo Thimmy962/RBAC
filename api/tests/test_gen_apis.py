@@ -8,7 +8,7 @@ from django.urls import reverse
 class GenreTest(APITestCase):
     def setUp(self):
         self.login = reverse("token_obtain_pair")
-        self.list_create_genre = reverse("list_create_genre")
+        self.create_genre = reverse("create_genre")
 
         admin = Staff.objects.create_user(
             username="Thimmy",
@@ -64,54 +64,21 @@ class GenreTest(APITestCase):
         self.add_genre_auth = res.data["access"]
 
 
-    def test_genre_get_api_without_credentials(self):
-        res = self.client.get(self.list_create_genre)
-        self.assertEqual(res.status_code, 401)
-
-
-    def test_genre_view_api_with_wrong_credentials(self):
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.add_genre_auth}")
-        res = self.client.get(self.list_create_genre)
-        self.assertEqual(res.status_code, 403)
-
-
-    def test_genre_view_api_with_correct_credentials(self):
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.view_genre_auth}")
-        res = self.client.get(self.list_create_genre)
-        self.assertEqual(res.status_code, 200)
-
-
     def test_genre_add_api_without_credentials(self):
-        res = self.client.post(self.list_create_genre, data = {"genre": "thriller"})
+        res = self.client.post(self.create_genre, data = {"genre": "thriller"})
         self.assertEqual(res.status_code, 401)
 
 
     def test_genre_add_api_with_wrong_credentials(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.view_genre_auth}")
-        res = self.client.post(self.list_create_genre, data = {"genre": "thriller"})
+        res = self.client.post(self.create_genre, data = {"genre": "thriller"})
         self.assertEqual(res.status_code, 403)
 
 
     def test_genre_add_api_with_correct_credentials(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.admin_auth}")
-        res = self.client.post(self.list_create_genre, data = {"genre": "thriiller"})
+        res = self.client.post(self.create_genre, data = {"genre": "thriiller"})
         self.assertEqual(res.status_code, 201)
-
-
-    def test_genre_view_api_with_wrong_credential_after_switch(self):
-        '''
-            the grp perms will be switched for the 2 staffs and tested
-            switch the permissions of add_genre grp from add_genre to view_genre
-            switch the permissions of view_genre grp from add_genre to add_genre
-            the users in the grps are not switched
-            view_auth will be wrong for get request and add
-        '''
-        self.add_genre_grp.permissions.set(self.view_permissions)
-        self.view_genre_grp.permissions.set(self.add_permissions)
-
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.view_genre_auth}")
-        res = self.client.get(self.list_create_genre)
-        self.assertEqual(res.status_code, 403)
 
 
     def test_genre_add_api_with_wrong_credential_after_switch(self):
@@ -126,24 +93,8 @@ class GenreTest(APITestCase):
         self.view_genre_grp.permissions.set(self.add_permissions)
 
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.add_genre_auth}")
-        res = self.client.post(self.list_create_genre, data = {"genre": "Romance"})
+        res = self.client.post(self.create_genre, data = {"genre": "Romance"})
         self.assertEqual(res.status_code, 403)
-
-    def test_genre_view_api_with_correct_credential_after_switch(self):
-        '''
-            the grp perms will be switched for the 2 staffs and tested
-            switch the permissions of add_genre grp from add_genre to view_genre
-            switch the permissions of view_genre grp from add_genre to add_genre
-            the users in the grps are not switched
-            view_auth will be wrong for get request and add
-        '''
-        self.add_genre_grp.permissions.set(self.view_permissions)
-        self.view_genre_grp.permissions.set(self.add_permissions)
-
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.add_genre_auth}")
-        res = self.client.get(self.list_create_genre)
-        self.assertEqual(res.status_code, 200)
-
 
     def test_genre_add_api_with_correct_credential_after_switch(self):
         '''
@@ -157,5 +108,5 @@ class GenreTest(APITestCase):
         self.view_genre_grp.permissions.set(self.add_permissions)
 
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.view_genre_auth}")
-        res = self.client.post(self.list_create_genre, data = {"genre": "Action"})
+        res = self.client.post(self.create_genre, data = {"genre": "Action"})
         self.assertEqual(res.status_code, 201)
