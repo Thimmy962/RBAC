@@ -38,5 +38,5 @@ urlpatterns = [
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include("api.urls")),
-    path("graph/", GraphQLView.as_view(graphiql = True))
+    path("graph", GraphQLView.as_view(graphiql = True))
 ]
