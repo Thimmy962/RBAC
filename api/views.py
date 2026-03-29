@@ -7,12 +7,12 @@ from api.models import Author, Book, Genre
 
 
 # TO CREATE OR LIST BOOK
-class ListCreateBookView(generics.ListCreateAPIView):
+class ListCreateBookView(AllModelsPermissionMixin, generics.ListCreateAPIView):
     queryset = Book.objects.all()
     serializer_class = serializers.BookSerializer
 list_create_book = ListCreateBookView.as_view()
 
-class RetrieveUpdateDestroyBookView(generics.RetrieveUpdateDestroyAPIView):
+class RetrieveUpdateDestroyBookView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = serializers.BookSerializer
 
@@ -27,12 +27,6 @@ class ListCreateAuthorView(AllModelsPermissionMixin, generics.ListCreateAPIView)
     serializer_class = serializers.AuthorSerializer
 list_create_author = ListCreateAuthorView.as_view()
 
-
-# RETRIEVE, UPDATE OR DESTROY AUTHOR
-class RetrieveUpdateDestroyAuthorView(AllModelsPermissionMixin, generics.RetrieveUpdateDestroyAPIView):
-    queryset = Author.objects.all()
-    serializer_class = serializers.AuthorSerializer
-retrieve_update_destroy_author = RetrieveUpdateDestroyAuthorView.as_view()
 
 
 # RETRIEVE, UPDATE OR DESTROY AUTHOR

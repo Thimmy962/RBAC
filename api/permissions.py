@@ -4,10 +4,21 @@ from rest_framework.permissions import BasePermission
 """
 Permissions to manage user
 """
+from rest_framework.permissions import BasePermission
+
+
 class CustomAdminUser(BasePermission):
-     def has_permission(self, request, view):
-          user = request.user
-          return bool(user and user.is_authenticated and user.is_staff and user.is_active)
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(
+            user
+            and user.is_authenticated
+            and user.is_staff
+            and user.is_active
+        )
+
+    def has_object_permission(self, request, view, obj):
+        return self.has_permission(request, view)
      
 
 
@@ -26,11 +37,10 @@ class ManageEveryModelPermission(BasePermission):
         'PATCH': 'change',
         'DELETE': 'delete',
     }
-
+    
     def has_permission(self, request, view):
         # check if the user is an admin
-        admin_check = CustomAdminUser().has_permission(request, view)
-        if not admin_check:
+        if not CustomAdminUser().has_permission(request, view):
             return False
         
         user = request.user

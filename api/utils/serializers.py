@@ -5,21 +5,12 @@ from django.contrib.auth.password_validation import validate_password as django_
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 
-class BookSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Book
-        fields = ["id", "title", "genre", "author"]
-
-    def validate_title(self, value):
-        clean = value.strip().title()
-        if not clean: raise serializers.validationError("Book title required")
-        if Book.objects.filter(title = clean).exclude(pk = self.instance.pk if self.instance else None):
-            return self.instance.title
-        return clean
-
+# makes sure that extra fields besides the required is not sent
+# the csrf token field comes as a security measure with django, so it is been added to the expected fields
+# This way it will not be flagged as an unexpected field
+class StrictSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         allowed = set(self.fields)
-        allowed.add("csrfmiddlewaretoken")
         extra = set(data) - allowed
         if extra:
             raise serializers.ValidationError(
@@ -27,16 +18,34 @@ class BookSerializer(serializers.ModelSerializer):
             )
         return super().to_internal_value(data)
 
+class BookSerializer(StrictSerializer):
+    class Meta:
+        model = Book
+        fields = ["id", "title", "genre", "author"]
 
-class AuthorSerializer(serializers.ModelSerializer):
+    def validate_title(self, value):
+        clean = value.strip().title()
+        if not clean: raise serializers.validationError("Book title required")
+        # if Book.objects.filter(title = clean).exclude(pk = self.instance.pk if self.instance else None).exists():
+            # return self.instance.title
+        if Book.objects.filter(title=clean).exclude(pk=self.instance.pk if self.instance else None).exists():
+            raise serializers.ValidationError("Book with this title already exists")
+        return clean
+
+
+class AuthorSerializer(StrictSerializer):
     books = serializers.SerializerMethodField()
     class Meta:
         model = Author
         fields = ["id", "first_name", "last_name", "books"]
 
+    # books written by this author
     def get_books(self, obj):
-        return [book for book in obj.author_books.all()]
+        # return [book.title for book in obj.author_books.all()]
+        # can also be written as 
+        return BookSerializer(obj.author_books.all(), many=True).data
     
+
     def get_fields(self):
         fields = super().get_fields()
         view = self.context.get("view")
@@ -58,18 +67,8 @@ class AuthorSerializer(serializers.ModelSerializer):
             return self.instance.last_name
         return cleaned
 
-    def to_internal_value(self, data):
-        allowed = set(self.fields)
-        allowed.add("csrfmiddlewaretoken")
-        extra = set(data) - allowed
-        if extra:
-            raise serializers.ValidationError(
-                {key: "Unexpected field" for key in extra}
-            )
-        return super().to_internal_value(data)
 
-
-class GenreSerializer(serializers.ModelSerializer):
+class GenreSerializer(StrictSerializer):
     books = serializers.SerializerMethodField()
     class Meta:
         model = Genre
@@ -98,81 +97,114 @@ class GenreSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    # makes sure that extra fields besides the required is not sent
-    # the csrf token field comes as a security measure with django, so it is been added to the expected fields
-    # This way it will not be flagged as an unexpected field
-    def to_internal_value(self, data):
-        allowed = set(self.fields)
-        allowed.add("csrfmiddlewaretoken")
-        extra = set(data) - allowed
-        if extra:
-            raise serializers.ValidationError(
-                {key: "Unexpected field" for key in extra}
-            )
-        return super().to_internal_value(data)
-
 
 # Group Serializer for creating Groups
-class ListCreateRoleSerializer(serializers.ModelSerializer):
-    members = serializers.SerializerMethodField()
+class ListCreateRoleSerializer(StrictSerializer):
+    member_usernames = serializers.SerializerMethodField()
+
+    members = serializers.PrimaryKeyRelatedField(
+        queryset=Staff.objects.all(), many=True, required=False
+    )
+
+    permissions = serializers.PrimaryKeyRelatedField(
+        queryset=Permission.objects.all(), many=True, required=False
+    )
+
     member_count = serializers.SerializerMethodField()
     permission_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
-        fields = ["id", "name", "members", "permissions", "permission_count", "member_count"]
+        fields = [
+            "id", "name",
+            "members", "member_usernames",
+            "permissions",
+            "member_count", "permission_count"
+        ]
 
-    def get_members(self, obj):
-            return [staff.username for staff in obj.user_groups.all()]
-    
+    def get_member_usernames(self, obj):
+        return [staff.username for staff in obj.user_groups.all()]
+
     def get_member_count(self, obj):
-        return obj.user_groups.all().count()
+        return obj.user_groups.count()
 
     def get_permission_count(self, obj):
         return obj.permissions.count()
-    
-    def get_fields(self):
-        fields = super().get_fields()
-        view = self.context.get("view")
-        if view and view.__class__.__name__ == "ListCreateRoleView":
-            fields.pop("members", None)
-            fields.pop("permissions", None)
-        return fields
 
     def validate_name(self, value):
         cleaned = value.strip().title()
-        if not cleaned: raise serializers.ValidationError("Group name is required")
-        if Group.objects.filter(name=cleaned).exists(): raise serializers.ValidationError("Group with this name already exists")
+        if not cleaned:
+            raise serializers.ValidationError("Group name is required")
+        if Group.objects.filter(name=cleaned).exists():
+            raise serializers.ValidationError("Group with this name already exists")
         return cleaned
-    
-    # makes sure that extra fields besides the required is not sent
-    def to_internal_value(self, data):
-        allowed = set(self.fields)
-        allowed.add("csrfmiddlewaretoken")
-        extra = set(data) - allowed
-        if extra:
-            raise serializers.ValidationError(
-                {key: "Unexpected field" for key in extra}
-            )
-        return super().to_internal_value(data)
+
+    def create(self, validated_data):
+        permissions = validated_data.pop("permissions", [])
+        members = validated_data.pop("members", [])
+
+        group = Group.objects.create(**validated_data)
+
+        if permissions:
+            group.permissions.set(permissions)
+
+        if members:
+            group.user_groups.set(members)
+
+        return group
 
 
 # Group Serializer for retrieving, updating and destroying roles/groups
-class RetrieveUpdateDestroyRoleSerializer(serializers.ModelSerializer):
-    members = serializers.SerializerMethodField()
+class RetrieveUpdateDestroyRoleSerializer(StrictSerializer):
+    member_usernames = serializers.SerializerMethodField()
+    permission_codenames = serializers.SerializerMethodField()
+
+    members = serializers.PrimaryKeyRelatedField(
+        queryset=Staff.objects.all(), many=True, required=False
+    )
+
+    permissions = serializers.PrimaryKeyRelatedField(
+        queryset=Permission.objects.all(), many=True, required=False
+    )
+
     member_count = serializers.SerializerMethodField()
     permission_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
-        fields = ["id", "name", "members", "permissions", "permission_count", "member_count"]
+        fields = [
+            "id", "name",
+            "members", "member_usernames",
+            "permissions", "permission_codenames",
+            "member_count", "permission_count"
+        ]
 
-    def get_members(self, obj):
-            return [staff.username for staff in obj.user_groups.all()]
-    
+    def get_member_usernames(self, obj):
+        return [staff.username for staff in obj.user_groups.all()]
+
     def get_member_count(self, obj):
-        return obj.user_groups.all().count()
+        return obj.user_groups.count()
 
     def get_permission_count(self, obj):
         return obj.permissions.count()
+
+    def get_permission_codenames(self, obj):
+        return [perm.codename for perm in obj.permissions.all()]
+
+    def update(self, instance, validated_data):
+        permissions = validated_data.pop("permissions", None)
+        members = validated_data.pop("members", None)
+
+        instance.name = validated_data.get("name", instance.name)
+        instance.save()
+
+        if permissions is not None:
+            instance.permissions.set(permissions)
+
+        if members is not None:
+            instance.user_groups.set(members)
+
+        return instance
 
     
 class ListStaffSerializer(serializers.ModelSerializer):
@@ -182,23 +214,13 @@ class ListStaffSerializer(serializers.ModelSerializer):
 
 
 # User Serializer for creating  users
-class CreateStaffSerializer(serializers.ModelSerializer):
+class CreateStaffSerializer(StrictSerializer):
     class Meta:
         model = Staff
         fields = ['username', 'email', 'password']
         extra_kwargs = {
             'password': {'write_only': True}  # this hides the password in API responses
         }
-
-    def to_internal_value(self, data):
-        allowed = set(self.fields)
-        allowed.add("csrfmiddlewaretoken")
-        extra = set(data) - allowed
-        if extra:
-            raise serializers.ValidationError(
-                {key: "Unexpected field" for key in extra}
-            )
-        return super().to_internal_value(data)
 
     # This create() method to hash password to solve the double hasing of password
     def create(self, validated_data):
